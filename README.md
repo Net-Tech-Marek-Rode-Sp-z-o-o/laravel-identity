@@ -14,8 +14,8 @@ php artisan migrate
 
 ## v1 scope
 
-Register · login · logout / logout-all · `/me` · the `CurrentUser` port. Realm-aware schema
-(single realm by default). 2FA, password reset, social login, invitations are seamed next steps.
+Register · login · logout / logout-all · `/me` · password reset · the `CurrentUser` port.
+Realm-aware schema (single realm by default). 2FA, social login, invitations are seamed next steps.
 
 ## License
 

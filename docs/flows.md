@@ -24,6 +24,20 @@ End-to-end behaviour of the package. Each flow is covered by a feature test in
    response for all three (no account enumeration).
 3. On success, a Sanctum token is issued and returned: `{ token }`.
 
+## Password reset
+
+- `POST /{prefix}/password/forgot` `{email}` — `RequestPasswordResetHandler` looks the user up by
+  `(current realm, email)`. If found, it generates a high-entropy token, stores its **SHA-256 hash**
+  with a TTL (`password_reset_ttl`), and hands the **plaintext** token to `PasswordResetNotifier`.
+  If not found, it does nothing. Either way the response is **204** — no account enumeration.
+- `POST /{prefix}/password/reset` `{token, password}` — `ResetPasswordHandler` looks the token up by
+  its SHA-256 hash, `redeem()`s it (rejecting an expired or already-used token with **422**), then
+  changes the user's password (emitting `PasswordChanged`) and marks the token used — all in one
+  transaction. Responds **204**.
+
+The default `MailPasswordResetNotifier` emails the raw token; a host binds its own notifier to send a
+branded email carrying its frontend reset URL.
+
 ## Session — `/me`
 
 `GET /{prefix}/me` (Bearer token)

@@ -6,6 +6,7 @@ namespace NetCode\Identity\Domain;
 
 use DateTimeImmutable;
 use NetCode\Domain\AggregateRoot;
+use NetCode\Identity\Domain\Event\PasswordChanged;
 use NetCode\Identity\Domain\Event\UserDeleted;
 use NetCode\Identity\Domain\Event\UserRegistered;
 use NetCode\Identity\Domain\ValueObjects\Email;
@@ -68,8 +69,14 @@ final class User extends AggregateRoot
 
     public function changePassword(
         string $passwordHash,
+        DateTimeImmutable $now,
     ): void {
         $this->passwordHash = $passwordHash;
+
+        $this->recordThat(new PasswordChanged(
+            userId: $this->id,
+            occurredOn: $now,
+        ));
     }
 
     public function delete(

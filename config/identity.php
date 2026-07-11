@@ -10,4 +10,6 @@ return [
 
     'token_name' => 'api',
 
+    'password_reset_ttl' => 60,
+
 ];

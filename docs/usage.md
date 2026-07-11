@@ -26,6 +26,7 @@ Configure the Sanctum guard to use this package's model (in the host `config/aut
 | `route_prefix` | `auth` | prefix for the shipped routes (`/auth/login`, `/auth/me`, …) |
 | `register_enabled` | `true` | whether `POST /register` is exposed |
 | `token_name` | `api` | Sanctum token name issued on login |
+| `password_reset_ttl` | `60` | reset-token lifetime in minutes |
 
 ## Endpoints
 
@@ -33,6 +34,8 @@ Configure the Sanctum guard to use this package's model (in the host `config/aut
 |---|---|---|---|
 | POST | `/{prefix}/register` | — | `{name,email,password}` → `201 {id}` |
 | POST | `/{prefix}/login` | — | `{email,password}` → `{token}` |
+| POST | `/{prefix}/password/forgot` | — | `{email}` → `204` (always; issues a token if the email exists) |
+| POST | `/{prefix}/password/reset` | — | `{token,password}` → `204` (`422` if the token is invalid/expired/used) |
 | POST | `/{prefix}/logout` | sanctum | `204` (revokes current token) |
 | POST | `/{prefix}/logout-all` | sanctum | `204` (revokes all tokens) |
 | GET | `/{prefix}/me` | sanctum | `{id,name,email,realmId}` |
@@ -49,6 +52,9 @@ Errors are mapped to JSON: invalid credentials → `401`, duplicate email → `4
 **Outbound** — bind a host adapter to override the default:
 - `RealmContext` — current realm (default `NullRealmContext` → single global pool). Bind your own to
   resolve a tenant from subdomain/header/path.
+- `PasswordResetNotifier` — how the reset token reaches the user. The default
+  `MailPasswordResetNotifier` sends a plain email with the token; override it to send a branded mail
+  containing your frontend reset URL.
 
 **Internal** — swappable adapters (defaults wired): `TokenIssuer`/`TokenRevoker` → Sanctum,
 `PasswordHasher` → Laravel Hash, `UserRepository` → Eloquent, `Clock` → `SystemClock`.
