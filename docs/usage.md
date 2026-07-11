@@ -9,8 +9,9 @@ php artisan migrate
 ```
 
 The service provider is auto-discovered. It ships the `identity_users` and (uuid-tokenable)
-`personal_access_tokens` migrations, and calls `Sanctum::ignoreMigrations()` so Sanctum's default
-bigint-tokenable migration does not clash.
+`personal_access_tokens` migrations. Sanctum v4 only *publishes* its default bigint-tokenable
+migration (it is not auto-loaded), so the package's uuid-tokenable one does not clash — don't run
+`vendor:publish` for Sanctum's migrations.
 
 Configure the Sanctum guard to use this package's model (in the host `config/auth.php`):
 
