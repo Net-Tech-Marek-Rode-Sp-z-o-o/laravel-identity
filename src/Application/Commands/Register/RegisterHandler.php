@@ -48,12 +48,14 @@ final readonly class RegisterHandler implements CommandHandler
 
         $this->users->save($user);
 
+        $registeredUser = new RegisteredUser(
+            id: $user->id()->value(),
+            name: $user->name(),
+            email: $user->email()->value(),
+        );
+
         $this->hook->afterRegistration(
-            user: new RegisteredUser(
-                id: $user->id()->value(),
-                name: $user->name(),
-                email: $user->email()->value(),
-            ),
+            user: $registeredUser,
             payload: $command->payload,
         );
 

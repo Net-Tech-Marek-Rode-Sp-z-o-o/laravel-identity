@@ -64,6 +64,7 @@ use NetCode\Identity\Infrastructure\Social\SocialiteIdentityProvider;
 use NetCode\Kit\Clock;
 use NetCode\Kit\SystemClock;
 use PragmaRX\Google2FA\Google2FA;
+use Symfony\Component\HttpFoundation\Response;
 
 final class IdentityServiceProvider extends ServiceProvider
 {
@@ -143,15 +144,15 @@ final class IdentityServiceProvider extends ServiceProvider
             return;
         }
 
-        $handler->renderable(fn (InvalidCredentialsException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 401));
-        $handler->renderable(fn (InvalidChallengeTokenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 401));
-        $handler->renderable(fn (EmailAlreadyTakenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
-        $handler->renderable(fn (InvalidResetTokenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
-        $handler->renderable(fn (InvalidInvitationException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
-        $handler->renderable(fn (InvalidTwoFactorCodeException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
-        $handler->renderable(fn (TwoFactorNotEnrolledException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
-        $handler->renderable(fn (SocialEmailNotVerifiedException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
-        $handler->renderable(fn (SocialAccountAlreadyLinkedException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 409));
-        $handler->renderable(fn (UserNotFoundException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 404));
+        $handler->renderable(fn (InvalidCredentialsException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNAUTHORIZED));
+        $handler->renderable(fn (InvalidChallengeTokenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNAUTHORIZED));
+        $handler->renderable(fn (EmailAlreadyTakenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
+        $handler->renderable(fn (InvalidResetTokenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
+        $handler->renderable(fn (InvalidInvitationException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
+        $handler->renderable(fn (InvalidTwoFactorCodeException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
+        $handler->renderable(fn (TwoFactorNotEnrolledException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
+        $handler->renderable(fn (SocialEmailNotVerifiedException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
+        $handler->renderable(fn (SocialAccountAlreadyLinkedException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_CONFLICT));
+        $handler->renderable(fn (UserNotFoundException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_NOT_FOUND));
     }
 }
