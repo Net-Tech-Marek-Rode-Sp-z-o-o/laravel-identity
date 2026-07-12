@@ -4,25 +4,26 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Presentation\Http\Resource;
 
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use NetCode\Identity\Application\Port\AuthenticatedUser;
-use Spatie\LaravelData\Data;
 
-final class MeResource extends Data
+final class MeResource extends JsonResource
 {
     public function __construct(
-        public string $id,
-        public string $name,
-        public string $email,
-        public string|null $realmId,
-    ) {}
+        private readonly AuthenticatedUser $user,
+    ) {
+        parent::__construct($user);
+    }
 
-    public static function fromAuthenticated(AuthenticatedUser $user): self
+    /** @return array<string, mixed> */
+    public function toArray(Request $request): array
     {
-        return new self(
-            id: $user->id,
-            name: $user->name,
-            email: $user->email,
-            realmId: $user->realmId,
-        );
+        return [
+            'id' => $this->user->id,
+            'name' => $this->user->name,
+            'email' => $this->user->email,
+            'realm_id' => $this->user->realmId,
+        ];
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Presentation\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
 use NetCode\Bus\Command\CommandBus;
 use NetCode\Identity\Application\Command\EnableTwoFactor\EnableTwoFactor;
 use NetCode\Identity\Application\Port\CurrentUser;
@@ -18,12 +17,12 @@ final readonly class EnableTwoFactorController
         private CurrentUser $currentUser,
     ) {}
 
-    public function __invoke(): JsonResponse
+    public function __invoke(): TwoFactorEnrolmentResource
     {
         $enrolment = $this->bus->dispatch(new EnableTwoFactor(
             userId: UserId::fromString($this->currentUser->user()->id),
         ));
 
-        return new JsonResponse(TwoFactorEnrolmentResource::fromEnrolment($enrolment));
+        return new TwoFactorEnrolmentResource($enrolment);
     }
 }

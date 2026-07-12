@@ -4,24 +4,25 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Presentation\Http\Resource;
 
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use NetCode\Identity\Application\Command\EnableTwoFactor\TwoFactorEnrolment;
-use Spatie\LaravelData\Data;
 
-final class TwoFactorEnrolmentResource extends Data
+final class TwoFactorEnrolmentResource extends JsonResource
 {
-    /** @param list<string> $recoveryCodes */
     public function __construct(
-        public string $secret,
-        public string $otpAuthUri,
-        public array $recoveryCodes,
-    ) {}
+        private readonly TwoFactorEnrolment $enrolment,
+    ) {
+        parent::__construct($enrolment);
+    }
 
-    public static function fromEnrolment(TwoFactorEnrolment $enrolment): self
+    /** @return array<string, mixed> */
+    public function toArray(Request $request): array
     {
-        return new self(
-            secret: $enrolment->secret,
-            otpAuthUri: $enrolment->otpAuthUri,
-            recoveryCodes: $enrolment->recoveryCodes,
-        );
+        return [
+            'secret' => $this->enrolment->secret,
+            'otpauth_uri' => $this->enrolment->otpAuthUri,
+            'recovery_codes' => $this->enrolment->recoveryCodes,
+        ];
     }
 }

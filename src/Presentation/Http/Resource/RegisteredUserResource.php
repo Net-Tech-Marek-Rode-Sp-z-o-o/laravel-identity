@@ -6,21 +6,20 @@ namespace NetCode\Identity\Presentation\Http\Resource;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use NetCode\Identity\Application\Command\RegenerateRecoveryCodes\RecoveryCodes;
 
-final class RecoveryCodesResource extends JsonResource
+final class RegisteredUserResource extends JsonResource
 {
     public function __construct(
-        private readonly RecoveryCodes $codes,
+        private readonly string $id,
     ) {
-        parent::__construct($codes);
+        parent::__construct($id);
     }
 
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         return [
-            'recovery_codes' => $this->codes->codes,
+            'id' => $this->id,
         ];
     }
 }

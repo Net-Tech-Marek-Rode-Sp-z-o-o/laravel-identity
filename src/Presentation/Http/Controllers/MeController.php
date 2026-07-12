@@ -15,6 +15,6 @@ final readonly class MeController
 
     public function __invoke(): MeResource
     {
-        return MeResource::fromAuthenticated($this->currentUser->user());
+        return new MeResource($this->currentUser->user());
     }
 }

@@ -27,21 +27,21 @@ final class AuthFlowTest extends TestCase
     {
         $register = $this->postJson('/auth/register', $this->credentials());
         $register->assertCreated();
-        $this->assertIsString($register->json('id'));
+        $this->assertIsString($register->json('data.id'));
 
         $login = $this->postJson('/auth/login', [
             'email' => 'ada@example.test',
             'password' => 'password123',
         ]);
         $login->assertOk();
-        $token = $login->json('token');
+        $token = $login->json('data.token');
         $this->assertIsString($token);
 
         $this->withToken($token)->getJson('/auth/me')
             ->assertOk()
-            ->assertJsonPath('name', 'Ada')
-            ->assertJsonPath('email', 'ada@example.test')
-            ->assertJsonPath('realmId', null);
+            ->assertJsonPath('data.name', 'Ada')
+            ->assertJsonPath('data.email', 'ada@example.test')
+            ->assertJsonPath('data.realm_id', null);
 
         // Assert revocation via DB state — re-requesting with the dead token in the same test
         // hits the in-process guard cache (a fresh HTTP process would 401 correctly).
@@ -74,7 +74,7 @@ final class AuthFlowTest extends TestCase
     {
         $this->postJson('/auth/register', $this->credentials())->assertCreated();
 
-        $first = $this->postJson('/auth/login', ['email' => 'ada@example.test', 'password' => 'password123'])->json('token');
+        $first = $this->postJson('/auth/login', ['email' => 'ada@example.test', 'password' => 'password123'])->json('data.token');
         $this->postJson('/auth/login', ['email' => 'ada@example.test', 'password' => 'password123']);
 
         $this->assertDatabaseCount('personal_access_tokens', 2);

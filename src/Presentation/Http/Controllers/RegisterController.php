@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use NetCode\Bus\Command\CommandBus;
 use NetCode\Identity\Application\Command\Register\Register;
 use NetCode\Identity\Presentation\Http\Data\RegisterData;
+use NetCode\Identity\Presentation\Http\Resource\RegisteredUserResource;
 
 final readonly class RegisterController
 {
@@ -24,6 +25,6 @@ final readonly class RegisterController
             password: $data->password,
         ));
 
-        return new JsonResponse(['id' => $userId], 201);
+        return new RegisteredUserResource($userId)->response()->setStatusCode(201);
     }
 }

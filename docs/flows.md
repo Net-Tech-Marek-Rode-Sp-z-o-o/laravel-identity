@@ -1,7 +1,8 @@
 # Flows
 
 End-to-end behaviour of the package. Each flow is covered by a feature test in
-`tests/Feature` (Testbench, Postgres).
+`tests/Feature` (Testbench, Postgres). Every non-empty success response is wrapped in a
+`{ "data": { … } }` envelope with snake_case fields; `204` responses have no body.
 
 ## Registration
 
@@ -13,7 +14,7 @@ End-to-end behaviour of the package. Each flow is covered by a feature test in
    - rejects a duplicate `(realm, email)` with **422** (`EmailAlreadyTakenException`),
    - hashes the password, creates the `User` aggregate, persists it,
    - the repository publishes `UserRegistered`.
-3. Responds `201 { id }`.
+3. Responds `201 { data: { id } }`.
 
 ## Login
 
@@ -22,7 +23,7 @@ End-to-end behaviour of the package. Each flow is covered by a feature test in
 1. `LoginHandler` looks the user up by `(current realm, email)`.
 2. Wrong email / no password / bad password → **401** (`InvalidCredentialsException`) — the same
    response for all three (no account enumeration).
-3. On success, a Sanctum token is issued and returned: `{ token }`.
+3. On success, a Sanctum token is issued and returned: `{ data: { token } }`.
 
 ## Password reset
 
@@ -45,8 +46,8 @@ secret. The TOTP secret is stored **encrypted** (`SecretEncrypter`); recovery co
 **SHA-256 hashed** and shown in plaintext only once.
 
 - `POST /{prefix}/2fa/enable` (authenticated) — `EnableTwoFactor` generates a secret and a set of
-  recovery codes, stores them as a **pending** enrolment, and returns `{secret, otpAuthUri,
-  recoveryCodes}`. Not yet active.
+  recovery codes, stores them as a **pending** enrolment, and returns
+  `{data:{secret, otpauth_uri, recovery_codes}}`. Not yet active.
 - `POST /{prefix}/2fa/confirm` `{code}` — `ConfirmTwoFactor` verifies a TOTP code against the pending
   secret and activates 2FA (emitting `TwoFactorEnabled`). A wrong code → **422**.
 - `POST /{prefix}/2fa/disable` `{code}` — `DisableTwoFactor` verifies a current TOTP code, then clears
@@ -55,21 +56,21 @@ secret. The TOTP secret is stored **encrypted** (`SecretEncrypter`); recovery co
   the new plaintext codes (requires confirmed 2FA).
 
 **Login with 2FA active.** `POST /{prefix}/login` no longer returns a token; it returns
-`{twoFactorRequired: true, challengeToken}`. The `challengeToken` is a **stateless, encrypted,
+`{data:{two_factor: true, challenge_token}}`. The `challenge_token` is a **stateless, encrypted,
 short-lived** token (`ChallengeTokenFactory`, TTL `two_factor.challenge_ttl`) — no server-side
 challenge table.
 
 - `POST /{prefix}/2fa/challenge` `{challengeToken, code}` — `VerifyTwoFactorChallenge` decrypts and
   expiry-checks the challenge token (**401** if invalid/expired), then accepts either a valid **TOTP
   code** or a **recovery code** (which is consumed, single-use). On success it issues the real Sanctum
-  token: `{token}`. A wrong TOTP and unknown recovery code → **422**.
+  token: `{data:{token}}`. A wrong TOTP and unknown recovery code → **422**.
 
 ## Session — `/me`
 
 `GET /{prefix}/me` (Bearer token)
 
 Reads the authenticated subject through the `CurrentUser` port and returns
-`{ id, name, email, realmId }`. Roles/permissions are **not** here — that is the access package's
+`{ data: { id, name, email, realm_id } }`. Roles/permissions are **not** here — that is the access package's
 concern, surfaced by composing its `Authorizer` into this response.
 
 ## Logout

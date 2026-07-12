@@ -33,20 +33,24 @@ Configure the Sanctum guard to use this package's model (in the host `config/aut
 
 ## Endpoints
 
-| Method | URI | Auth | Body / result |
+Request bodies use spatie-Data (validated). **Every non-empty success response is wrapped in a
+`{ "data": { … } }` envelope (Laravel API resources) with snake_case fields.** `204` responses have
+no body.
+
+| Method | URI | Auth | Body → result |
 |---|---|---|---|
-| POST | `/{prefix}/register` | — | `{name,email,password}` → `201 {id}` |
-| POST | `/{prefix}/login` | — | `{email,password}` → `{token}`, or `{twoFactorRequired:true,challengeToken}` if 2FA is active |
-| POST | `/{prefix}/2fa/challenge` | — | `{challengeToken,code}` → `{token}` (`code` = a TOTP or a recovery code) |
+| POST | `/{prefix}/register` | — | `{name,email,password}` → `201 {data:{id}}` |
+| POST | `/{prefix}/login` | — | `{email,password}` → `{data:{token}}`, or `{data:{two_factor:true,challenge_token}}` if 2FA is active |
+| POST | `/{prefix}/2fa/challenge` | — | `{challengeToken,code}` → `{data:{token}}` (`code` = a TOTP or a recovery code) |
 | POST | `/{prefix}/password/forgot` | — | `{email}` → `204` (always; issues a token if the email exists) |
 | POST | `/{prefix}/password/reset` | — | `{token,password}` → `204` (`422` if the token is invalid/expired/used) |
 | POST | `/{prefix}/logout` | sanctum | `204` (revokes current token) |
 | POST | `/{prefix}/logout-all` | sanctum | `204` (revokes all tokens) |
-| GET | `/{prefix}/me` | sanctum | `{id,name,email,realmId}` |
-| POST | `/{prefix}/2fa/enable` | sanctum | `{secret,otpAuthUri,recoveryCodes}` (starts pending enrolment) |
+| GET | `/{prefix}/me` | sanctum | `{data:{id,name,email,realm_id}}` |
+| POST | `/{prefix}/2fa/enable` | sanctum | `{data:{secret,otpauth_uri,recovery_codes}}` (starts pending enrolment) |
 | POST | `/{prefix}/2fa/confirm` | sanctum | `{code}` → `204` (activates 2FA; `422` on a bad code) |
 | POST | `/{prefix}/2fa/disable` | sanctum | `{code}` → `204` (`422` on a bad code) |
-| POST | `/{prefix}/2fa/recovery-codes` | sanctum | `{recoveryCodes}` (regenerates, replacing the old set) |
+| POST | `/{prefix}/2fa/recovery-codes` | sanctum | `{data:{recovery_codes}}` (regenerates, replacing the old set) |
 
 Errors are mapped to JSON: invalid credentials → `401`, invalid/expired 2FA challenge token → `401`,
 duplicate email → `422`, invalid reset token → `422`, invalid 2FA code → `422`, 2FA not enrolled →

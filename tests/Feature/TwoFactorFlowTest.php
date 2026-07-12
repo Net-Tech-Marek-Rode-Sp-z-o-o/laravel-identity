@@ -24,7 +24,7 @@ final class TwoFactorFlowTest extends TestCase
         return (string) $this->postJson('/auth/login', [
             'email' => 'ada@example.test',
             'password' => 'password123',
-        ])->json('token');
+        ])->json('data.token');
     }
 
     private function otp(string $secret): string
@@ -39,9 +39,9 @@ final class TwoFactorFlowTest extends TestCase
 
         $enable = $this->withToken($token)->postJson('/auth/2fa/enable');
         $enable->assertOk();
-        $secret = (string) $enable->json('secret');
+        $secret = (string) $enable->json('data.secret');
         /** @var list<string> $recoveryCodes */
-        $recoveryCodes = $enable->json('recoveryCodes');
+        $recoveryCodes = $enable->json('data.recovery_codes');
 
         $this->withToken($token)->postJson('/auth/2fa/confirm', ['code' => $this->otp($secret)])
             ->assertNoContent();
@@ -55,8 +55,8 @@ final class TwoFactorFlowTest extends TestCase
         ['secret' => $secret] = $this->enableAndConfirm();
 
         $login = $this->postJson('/auth/login', ['email' => 'ada@example.test', 'password' => 'password123']);
-        $login->assertOk()->assertJsonPath('twoFactorRequired', true);
-        $challengeToken = (string) $login->json('challengeToken');
+        $login->assertOk()->assertJsonPath('data.two_factor', true);
+        $challengeToken = (string) $login->json('data.challenge_token');
         $this->assertNotSame('', $challengeToken);
 
         $challenge = $this->postJson('/auth/2fa/challenge', [
@@ -64,9 +64,9 @@ final class TwoFactorFlowTest extends TestCase
             'code' => $this->otp($secret),
         ]);
         $challenge->assertOk();
-        $token = (string) $challenge->json('token');
+        $token = (string) $challenge->json('data.token');
 
-        $this->withToken($token)->getJson('/auth/me')->assertOk()->assertJsonPath('email', 'ada@example.test');
+        $this->withToken($token)->getJson('/auth/me')->assertOk()->assertJsonPath('data.email', 'ada@example.test');
     }
 
     #[Test]
@@ -77,7 +77,7 @@ final class TwoFactorFlowTest extends TestCase
         $challengeToken = (string) $this->postJson('/auth/login', [
             'email' => 'ada@example.test',
             'password' => 'password123',
-        ])->json('challengeToken');
+        ])->json('data.challenge_token');
 
         $this->postJson('/auth/2fa/challenge', [
             'challengeToken' => $challengeToken,
@@ -88,7 +88,7 @@ final class TwoFactorFlowTest extends TestCase
         $nextChallenge = (string) $this->postJson('/auth/login', [
             'email' => 'ada@example.test',
             'password' => 'password123',
-        ])->json('challengeToken');
+        ])->json('data.challenge_token');
 
         $this->postJson('/auth/2fa/challenge', [
             'challengeToken' => $nextChallenge,
@@ -116,8 +116,8 @@ final class TwoFactorFlowTest extends TestCase
 
         $this->postJson('/auth/login', ['email' => 'ada@example.test', 'password' => 'password123'])
             ->assertOk()
-            ->assertJsonMissingPath('twoFactorRequired')
-            ->assertJsonPath('token', fn (mixed $token): bool => is_string($token));
+            ->assertJsonMissingPath('data.two_factor')
+            ->assertJsonPath('data.token', fn (mixed $token): bool => is_string($token));
     }
 
     #[Test]
@@ -128,7 +128,7 @@ final class TwoFactorFlowTest extends TestCase
         $regenerate = $this->withToken($token)->postJson('/auth/2fa/recovery-codes');
         $regenerate->assertOk();
         /** @var list<string> $new */
-        $new = $regenerate->json('recoveryCodes');
+        $new = $regenerate->json('data.recovery_codes');
 
         $this->assertNotSame($old, $new);
         $this->assertCount(8, $new);
