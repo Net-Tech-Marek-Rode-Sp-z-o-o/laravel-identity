@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Presentation\Http\Controllers;
 
-use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse;
 use NetCode\Bus\Command\CommandBus;
 use NetCode\Identity\Application\Commands\ResetPassword\ResetPassword;
 use NetCode\Identity\Presentation\Http\Data\ResetPasswordData;
+use Symfony\Component\HttpFoundation\Response;
 
 final readonly class ResetPasswordController
 {
@@ -17,12 +18,12 @@ final readonly class ResetPasswordController
 
     public function __invoke(
         ResetPasswordData $data,
-    ): Response {
+    ): JsonResponse {
         $this->bus->dispatch(new ResetPassword(
             token: $data->token,
             password: $data->password,
         ));
 
-        return new Response(status: 204);
+        return new JsonResponse(status: Response::HTTP_NO_CONTENT);
     }
 }

@@ -9,6 +9,7 @@ use NetCode\Bus\Command\CommandBus;
 use NetCode\Identity\Application\Commands\AcceptInvitation\AcceptInvitation;
 use NetCode\Identity\Presentation\Http\Data\AcceptInvitationData;
 use NetCode\Identity\Presentation\Http\Resources\RegisteredUserResource;
+use Symfony\Component\HttpFoundation\Response;
 
 final readonly class AcceptInvitationController
 {
@@ -25,6 +26,6 @@ final readonly class AcceptInvitationController
             password: $data->password,
         ));
 
-        return new RegisteredUserResource($userId)->response()->setStatusCode(201);
+        return new RegisteredUserResource($userId)->response()->setStatusCode(Response::HTTP_CREATED);
     }
 }

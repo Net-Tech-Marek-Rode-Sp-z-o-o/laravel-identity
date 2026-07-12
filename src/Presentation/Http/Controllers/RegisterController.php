@@ -9,6 +9,7 @@ use NetCode\Bus\Command\CommandBus;
 use NetCode\Identity\Application\Commands\Register\Register;
 use NetCode\Identity\Presentation\Http\Data\RegisterData;
 use NetCode\Identity\Presentation\Http\Resources\RegisteredUserResource;
+use Symfony\Component\HttpFoundation\Response;
 
 final readonly class RegisterController
 {
@@ -25,6 +26,6 @@ final readonly class RegisterController
             password: $data->password,
         ));
 
-        return new RegisteredUserResource($userId)->response()->setStatusCode(201);
+        return new RegisteredUserResource($userId)->response()->setStatusCode(Response::HTTP_CREATED);
     }
 }

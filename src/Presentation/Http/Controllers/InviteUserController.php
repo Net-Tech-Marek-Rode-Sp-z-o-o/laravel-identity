@@ -9,6 +9,7 @@ use NetCode\Bus\Command\CommandBus;
 use NetCode\Identity\Application\Commands\InviteUser\InviteUser;
 use NetCode\Identity\Presentation\Http\Data\InviteUserData;
 use NetCode\Identity\Presentation\Http\Resources\InvitationResource;
+use Symfony\Component\HttpFoundation\Response;
 
 final readonly class InviteUserController
 {
@@ -24,6 +25,6 @@ final readonly class InviteUserController
             metadata: $data->metadata,
         ));
 
-        return new InvitationResource($invitation)->response()->setStatusCode(201);
+        return new InvitationResource($invitation)->response()->setStatusCode(Response::HTTP_CREATED);
     }
 }
