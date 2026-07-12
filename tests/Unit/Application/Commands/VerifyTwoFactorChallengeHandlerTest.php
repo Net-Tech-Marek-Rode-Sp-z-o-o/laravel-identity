@@ -9,6 +9,7 @@ use NetCode\Identity\Application\Commands\VerifyTwoFactorChallenge\VerifyTwoFact
 use NetCode\Identity\Domain\Exceptions\InvalidChallengeTokenException;
 use NetCode\Identity\Domain\Exceptions\InvalidTwoFactorCodeException;
 use NetCode\Identity\Domain\ValueObjects\UserId;
+use NetCode\Identity\Infrastructure\Security\Sha256TokenHasher;
 use NetCode\Identity\Tests\Support\FakeChallengeTokenFactory;
 use NetCode\Identity\Tests\Support\FakeSecretEncrypter;
 use NetCode\Identity\Tests\Support\FakeTokenIssuer;
@@ -23,6 +24,7 @@ final class VerifyTwoFactorChallengeHandlerTest extends TestCase
     private function handler(InMemoryUserRepository $users): VerifyTwoFactorChallengeHandler
     {
         return new VerifyTwoFactorChallengeHandler(
+            tokenHasher: new Sha256TokenHasher,
             totp: new FakeTotp,
             issuer: new FakeTokenIssuer,
             users: $users,

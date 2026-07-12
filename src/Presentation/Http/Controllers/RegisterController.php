@@ -28,7 +28,7 @@ final readonly class RegisterController
             name: $data->name,
             email: $data->email,
             password: $data->password,
-            payload: $this->payloads->fromRequest($this->request),
+            payload: $this->payloads->fromInput($this->request->all()),
         ));
 
         return new RegisteredUserResource($userId)->response()->setStatusCode(Response::HTTP_CREATED);

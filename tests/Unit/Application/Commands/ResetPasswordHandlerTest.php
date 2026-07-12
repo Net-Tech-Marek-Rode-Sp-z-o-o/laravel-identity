@@ -13,6 +13,7 @@ use NetCode\Identity\Domain\User;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\PasswordResetTokenId;
 use NetCode\Identity\Domain\ValueObjects\UserId;
+use NetCode\Identity\Infrastructure\Security\Sha256TokenHasher;
 use NetCode\Identity\Tests\Support\FakePasswordHasher;
 use NetCode\Identity\Tests\Support\FixedClock;
 use NetCode\Identity\Tests\Support\InMemoryPasswordResetTokenRepository;
@@ -27,6 +28,7 @@ final class ResetPasswordHandlerTest extends TestCase
     private function handler(InMemoryUserRepository $users, InMemoryPasswordResetTokenRepository $tokens): ResetPasswordHandler
     {
         return new ResetPasswordHandler(
+            tokenHasher: new Sha256TokenHasher,
             clock: new FixedClock(new DateTimeImmutable(self::CLOCK)),
             hasher: new FakePasswordHasher,
             users: $users,

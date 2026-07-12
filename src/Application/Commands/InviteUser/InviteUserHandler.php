@@ -9,6 +9,7 @@ use NetCode\Bus\Command\CommandHandler;
 use NetCode\Identity\Application\Ports\InvitationNotifier;
 use NetCode\Identity\Application\Ports\RealmContext;
 use NetCode\Identity\Application\Ports\TokenGenerator;
+use NetCode\Identity\Application\Ports\TokenHasher;
 use NetCode\Identity\Domain\Contracts\InvitationRepository;
 use NetCode\Identity\Domain\Contracts\UserRepository;
 use NetCode\Identity\Domain\Exceptions\EmailAlreadyTakenException;
@@ -22,6 +23,7 @@ final readonly class InviteUserHandler implements CommandHandler
         private Clock $clock,
         private RealmContext $realm,
         private TokenGenerator $generator,
+        private TokenHasher $tokenHasher,
         private UserRepository $users,
         private InvitationNotifier $notifier,
         private InvitationRepository $invitations,
@@ -44,7 +46,7 @@ final readonly class InviteUserHandler implements CommandHandler
             id: $this->invitations->nextId(),
             realmId: $realm,
             email: $email,
-            tokenHash: hash('sha256', $token),
+            tokenHash: $this->tokenHasher->hash($token),
             metadata: $command->metadata,
             expiresAt: $this->clock->now()->add(new DateInterval('PT'.$this->ttlMinutes.'M')),
         );

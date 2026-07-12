@@ -7,6 +7,7 @@ namespace NetCode\Identity\Application\Commands\EnableTwoFactor;
 use NetCode\Bus\Command\CommandHandler;
 use NetCode\Identity\Application\Ports\RecoveryCodeGenerator;
 use NetCode\Identity\Application\Ports\SecretEncrypter;
+use NetCode\Identity\Application\Ports\TokenHasher;
 use NetCode\Identity\Application\Ports\Totp;
 use NetCode\Identity\Application\TwoFactorPolicy;
 use NetCode\Identity\Domain\Contracts\UserRepository;
@@ -17,6 +18,7 @@ final readonly class EnableTwoFactorHandler implements CommandHandler
     public function __construct(
         private Totp $totp,
         private string $issuer,
+        private TokenHasher $tokenHasher,
         private UserRepository $users,
         private SecretEncrypter $secrets,
         private RecoveryCodeGenerator $recoveryCodes,
@@ -29,7 +31,7 @@ final readonly class EnableTwoFactorHandler implements CommandHandler
 
         $secret = $this->totp->generateSecret();
         $plainCodes = $this->recoveryCodes->generate(TwoFactorPolicy::RECOVERY_CODE_COUNT);
-        $hashedCodes = array_map(static fn (string $code): string => hash('sha256', $code), $plainCodes);
+        $hashedCodes = array_map(fn (string $code): string => $this->tokenHasher->hash($code), $plainCodes);
 
         $user->enableTwoFactor(TwoFactorSettings::pending(
             secret: $this->secrets->encrypt($secret),

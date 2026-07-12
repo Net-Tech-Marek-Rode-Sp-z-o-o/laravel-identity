@@ -8,6 +8,7 @@ use NetCode\Bus\Command\CommandHandler;
 use NetCode\Identity\Application\Ports\AcceptedInvitation;
 use NetCode\Identity\Application\Ports\InvitationAcceptanceHook;
 use NetCode\Identity\Application\Ports\PasswordHasher;
+use NetCode\Identity\Application\Ports\TokenHasher;
 use NetCode\Identity\Domain\Contracts\InvitationRepository;
 use NetCode\Identity\Domain\Contracts\UserRepository;
 use NetCode\Identity\Domain\Exceptions\EmailAlreadyTakenException;
@@ -20,6 +21,7 @@ final readonly class AcceptInvitationHandler implements CommandHandler
     public function __construct(
         private Clock $clock,
         private PasswordHasher $hasher,
+        private TokenHasher $tokenHasher,
         private UserRepository $users,
         private InvitationRepository $invitations,
         private InvitationAcceptanceHook $hook,
@@ -28,7 +30,7 @@ final readonly class AcceptInvitationHandler implements CommandHandler
     public function __invoke(
         AcceptInvitation $command,
     ): string {
-        $invitation = $this->invitations->findByHash(hash('sha256', $command->token));
+        $invitation = $this->invitations->findByHash($this->tokenHasher->hash($command->token));
 
         if ($invitation === null) {
             throw InvalidInvitationException::notFound();

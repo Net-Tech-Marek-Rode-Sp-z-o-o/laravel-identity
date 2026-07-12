@@ -6,6 +6,7 @@ namespace NetCode\Identity\Application\Commands\ResetPassword;
 
 use NetCode\Bus\Command\CommandHandler;
 use NetCode\Identity\Application\Ports\PasswordHasher;
+use NetCode\Identity\Application\Ports\TokenHasher;
 use NetCode\Identity\Domain\Contracts\PasswordResetTokenRepository;
 use NetCode\Identity\Domain\Contracts\UserRepository;
 use NetCode\Identity\Domain\Exceptions\InvalidResetTokenException;
@@ -16,6 +17,7 @@ final readonly class ResetPasswordHandler implements CommandHandler
     public function __construct(
         private Clock $clock,
         private PasswordHasher $hasher,
+        private TokenHasher $tokenHasher,
         private UserRepository $users,
         private PasswordResetTokenRepository $tokens,
     ) {}
@@ -23,7 +25,7 @@ final readonly class ResetPasswordHandler implements CommandHandler
     public function __invoke(
         ResetPassword $command,
     ): null {
-        $token = $this->tokens->findByHash(hash('sha256', $command->token));
+        $token = $this->tokens->findByHash($this->tokenHasher->hash($command->token));
 
         if ($token === null) {
             throw InvalidResetTokenException::notFound();

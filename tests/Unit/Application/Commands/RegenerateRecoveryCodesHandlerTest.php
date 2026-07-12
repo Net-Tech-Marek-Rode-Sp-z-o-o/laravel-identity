@@ -8,6 +8,7 @@ use NetCode\Identity\Application\Commands\RegenerateRecoveryCodes\RegenerateReco
 use NetCode\Identity\Application\Commands\RegenerateRecoveryCodes\RegenerateRecoveryCodesHandler;
 use NetCode\Identity\Application\TwoFactorPolicy;
 use NetCode\Identity\Domain\ValueObjects\UserId;
+use NetCode\Identity\Infrastructure\Security\Sha256TokenHasher;
 use NetCode\Identity\Tests\Support\FakeRecoveryCodeGenerator;
 use NetCode\Identity\Tests\Support\InMemoryUserRepository;
 use NetCode\Identity\Tests\Support\TwoFactorUserMother;
@@ -24,6 +25,7 @@ final class RegenerateRecoveryCodesHandlerTest extends TestCase
         $users->save(TwoFactorUserMother::confirmed($id, ['OLD-CODE']));
 
         $handler = new RegenerateRecoveryCodesHandler(
+            tokenHasher: new Sha256TokenHasher,
             users: $users,
             recoveryCodes: new FakeRecoveryCodeGenerator,
         );

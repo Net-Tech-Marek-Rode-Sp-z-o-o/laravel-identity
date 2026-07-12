@@ -10,6 +10,7 @@ use NetCode\Identity\Domain\Exceptions\EmailAlreadyTakenException;
 use NetCode\Identity\Domain\User;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\UserId;
+use NetCode\Identity\Infrastructure\Security\Sha256TokenHasher;
 use NetCode\Identity\Tests\Support\FixedClock;
 use NetCode\Identity\Tests\Support\FixedRealmContext;
 use NetCode\Identity\Tests\Support\FixedTokenGenerator;
@@ -27,6 +28,7 @@ final class InviteUserHandlerTest extends TestCase
         SpyInvitationNotifier $notifier,
     ): InviteUserHandler {
         return new InviteUserHandler(
+            tokenHasher: new Sha256TokenHasher,
             clock: new FixedClock,
             realm: new FixedRealmContext,
             generator: new FixedTokenGenerator('the-token'),

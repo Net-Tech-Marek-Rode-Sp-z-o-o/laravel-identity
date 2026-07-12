@@ -11,6 +11,7 @@ use NetCode\Identity\Application\TwoFactorPolicy;
 use NetCode\Identity\Domain\User;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\UserId;
+use NetCode\Identity\Infrastructure\Security\Sha256TokenHasher;
 use NetCode\Identity\Tests\Support\FakeRecoveryCodeGenerator;
 use NetCode\Identity\Tests\Support\FakeSecretEncrypter;
 use NetCode\Identity\Tests\Support\FakeTotp;
@@ -35,6 +36,7 @@ final class EnableTwoFactorHandlerTest extends TestCase
         ));
 
         $handler = new EnableTwoFactorHandler(
+            tokenHasher: new Sha256TokenHasher,
             totp: new FakeTotp,
             issuer: 'Acme',
             users: $users,

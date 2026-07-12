@@ -12,6 +12,7 @@ use NetCode\Identity\Domain\Invitation;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\InvitationId;
 use NetCode\Identity\Domain\ValueObjects\UserId;
+use NetCode\Identity\Infrastructure\Security\Sha256TokenHasher;
 use NetCode\Identity\Tests\Support\FakePasswordHasher;
 use NetCode\Identity\Tests\Support\FixedClock;
 use NetCode\Identity\Tests\Support\InMemoryInvitationRepository;
@@ -38,6 +39,7 @@ final class AcceptInvitationHandlerTest extends TestCase
     private function handler(): AcceptInvitationHandler
     {
         return new AcceptInvitationHandler(
+            tokenHasher: new Sha256TokenHasher,
             clock: new FixedClock,
             hasher: new FakePasswordHasher,
             users: $this->users,

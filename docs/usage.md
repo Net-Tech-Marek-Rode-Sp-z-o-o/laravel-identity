@@ -89,6 +89,7 @@ invalid 2FA code → `422`, 2FA not enrolled → `422`, unverified social email 
 **Internal** — swappable adapters (defaults wired): `TokenIssuer`/`TokenRevoker` → Sanctum,
 `PasswordHasher` → Laravel Hash, `UserRepository` → Eloquent, `Clock` → `SystemClock`,
 `Totp` → `pragmarx/google2fa`, `SecretEncrypter` → Laravel `Crypt`, `RecoveryCodeGenerator` → random,
+`TokenHasher` → SHA-256 (hashes reset/invitation/recovery tokens for at-rest lookup),
 `ChallengeTokenFactory` → a stateless encrypted token (no challenge table), `SocialIdentityProvider`
 → `laravel/socialite` (configure each provider's client id/secret in the host's `config/services.php`;
 the SPA obtains the provider access token and posts it to `/{provider}/login|link`).
