@@ -15,8 +15,9 @@ php artisan migrate
 ## v1 scope
 
 Register · login · logout / logout-all · `/me` · password reset · TOTP two-factor (enable/confirm/
-disable, recovery codes, login challenge) · the `CurrentUser` port. Realm-aware schema (single realm
-by default). Social login and invitations are seamed next steps.
+disable, recovery codes, login challenge) · invitations (invite / accept / revoke, typed acceptance
+hook) · the `CurrentUser` port. Realm-aware schema (single realm by default). Social login is a
+seamed next step.
 
 ## License
 

@@ -9,9 +9,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use NetCode\Identity\Application\Commands\EnableTwoFactor\EnableTwoFactorHandler;
+use NetCode\Identity\Application\Commands\InviteUser\InviteUserHandler;
 use NetCode\Identity\Application\Commands\RequestPasswordReset\RequestPasswordResetHandler;
 use NetCode\Identity\Application\Ports\ChallengeTokenFactory;
 use NetCode\Identity\Application\Ports\CurrentUser;
+use NetCode\Identity\Application\Ports\InvitationAcceptanceHook;
+use NetCode\Identity\Application\Ports\InvitationNotifier;
 use NetCode\Identity\Application\Ports\PasswordHasher;
 use NetCode\Identity\Application\Ports\PasswordResetNotifier;
 use NetCode\Identity\Application\Ports\RealmContext;
@@ -21,19 +24,24 @@ use NetCode\Identity\Application\Ports\TokenGenerator;
 use NetCode\Identity\Application\Ports\TokenIssuer;
 use NetCode\Identity\Application\Ports\TokenRevoker;
 use NetCode\Identity\Application\Ports\Totp;
+use NetCode\Identity\Domain\Contracts\InvitationRepository;
 use NetCode\Identity\Domain\Contracts\PasswordResetTokenRepository;
 use NetCode\Identity\Domain\Contracts\UserRepository;
 use NetCode\Identity\Domain\Exceptions\EmailAlreadyTakenException;
 use NetCode\Identity\Domain\Exceptions\InvalidChallengeTokenException;
 use NetCode\Identity\Domain\Exceptions\InvalidCredentialsException;
+use NetCode\Identity\Domain\Exceptions\InvalidInvitationException;
 use NetCode\Identity\Domain\Exceptions\InvalidResetTokenException;
 use NetCode\Identity\Domain\Exceptions\InvalidTwoFactorCodeException;
 use NetCode\Identity\Domain\Exceptions\TwoFactorNotEnrolledException;
 use NetCode\Identity\Domain\Exceptions\UserNotFoundException;
 use NetCode\Identity\Infrastructure\Auth\SanctumCurrentUser;
 use NetCode\Identity\Infrastructure\Challenge\SignedChallengeTokenFactory;
+use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentInvitationRepository;
 use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentPasswordResetTokenRepository;
 use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentUserRepository;
+use NetCode\Identity\Infrastructure\Invitation\NullInvitationAcceptanceHook;
+use NetCode\Identity\Infrastructure\Mail\MailInvitationNotifier;
 use NetCode\Identity\Infrastructure\Mail\MailPasswordResetNotifier;
 use NetCode\Identity\Infrastructure\Realm\NullRealmContext;
 use NetCode\Identity\Infrastructure\Sanctum\SanctumTokenIssuer;
@@ -64,6 +72,9 @@ final class IdentityServiceProvider extends ServiceProvider
         $this->app->bind(SecretEncrypter::class, LaravelSecretEncrypter::class);
         $this->app->bind(RecoveryCodeGenerator::class, RandomRecoveryCodeGenerator::class);
         $this->app->bind(ChallengeTokenFactory::class, SignedChallengeTokenFactory::class);
+        $this->app->bind(InvitationRepository::class, EloquentInvitationRepository::class);
+        $this->app->bind(InvitationNotifier::class, MailInvitationNotifier::class);
+        $this->app->bind(InvitationAcceptanceHook::class, NullInvitationAcceptanceHook::class);
         $this->app->scoped(CurrentUser::class, SanctumCurrentUser::class);
 
         $this->app->bind(Totp::class, fn (): Totp => new PragmaRxTotp(new Google2FA));
@@ -83,6 +94,10 @@ final class IdentityServiceProvider extends ServiceProvider
         $this->app->when(EnableTwoFactorHandler::class)
             ->needs('$issuer')
             ->give(fn (): string => (string) (config('identity.two_factor.issuer') ?? config('app.name')));
+
+        $this->app->when(InviteUserHandler::class)
+            ->needs('$ttlMinutes')
+            ->give(fn (): int => (int) config('identity.invitation_ttl'));
     }
 
     public function boot(): void
@@ -118,6 +133,7 @@ final class IdentityServiceProvider extends ServiceProvider
         $handler->renderable(fn (InvalidChallengeTokenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 401));
         $handler->renderable(fn (EmailAlreadyTakenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
         $handler->renderable(fn (InvalidResetTokenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
+        $handler->renderable(fn (InvalidInvitationException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
         $handler->renderable(fn (InvalidTwoFactorCodeException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
         $handler->renderable(fn (TwoFactorNotEnrolledException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
         $handler->renderable(fn (UserNotFoundException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 404));

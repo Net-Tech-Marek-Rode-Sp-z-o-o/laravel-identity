@@ -80,6 +80,26 @@ concern, surfaced by composing its `Authorizer` into this response.
 - `POST /{prefix}/logout-all` — revokes **every** token for the user → **204**. All existing
   sessions are invalidated.
 
+## Invitations
+
+An authenticated user invites an email; the invitee accepts with a token, which creates their account.
+
+- `POST /{prefix}/invitations` `{email, metadata?}` (authenticated) — `InviteUser` rejects an email
+  that already belongs to a user (**422**), then issues an `Invitation`: a high-entropy token stored
+  **SHA-256 hashed** with a TTL (`invitation_ttl`) plus a host-interpreted `metadata` map, and hands
+  the plaintext token to `InvitationNotifier`. Returns `{data:{id, email, expires_at}}`.
+- `POST /{prefix}/invitations/accept` `{token, name, password}` (public) — `AcceptInvitation` looks
+  the invitation up by token hash, `accept()`s it (an expired, already-accepted or revoked one → **422**),
+  creates the `User` in the invitation's realm with the given name/password, marks the invitation
+  accepted (emitting `InvitationAccepted`), and runs `InvitationAcceptanceHook` with a typed
+  `AcceptedInvitation { userId, email, realmId, metadata }` — all in one transaction. Responds
+  `201 {data:{id}}`.
+- `DELETE /{prefix}/invitations/{invitationId}` (authenticated) — `RevokeInvitation` revokes a pending
+  invitation so its token can no longer be accepted → **204**.
+
+Roles/permissions are **not** part of this — the intended role rides in `metadata`, and the host's
+acceptance hook (or the access package) turns it into an actual grant.
+
 ## Multi-tenancy (realm)
 
 The schema is realm-aware (`identity_users.realm_id`, unique `(realm_id, email)` with a partial

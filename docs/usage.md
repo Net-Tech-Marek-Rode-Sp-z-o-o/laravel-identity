@@ -28,6 +28,7 @@ Configure the Sanctum guard to use this package's model (in the host `config/aut
 | `register_enabled` | `true` | whether `POST /register` is exposed |
 | `token_name` | `api` | Sanctum token name issued on login |
 | `password_reset_ttl` | `60` | reset-token lifetime in minutes |
+| `invitation_ttl` | `4320` | invitation lifetime in minutes (default 3 days) |
 | `two_factor.issuer` | `null` | TOTP issuer label shown in authenticator apps (falls back to `app.name`) |
 | `two_factor.challenge_ttl` | `5` | 2FA challenge-token lifetime in minutes |
 
@@ -44,6 +45,7 @@ no body.
 | POST | `/{prefix}/2fa/challenge` | — | `{challengeToken,code}` → `{data:{token}}` (`code` = a TOTP or a recovery code) |
 | POST | `/{prefix}/password/forgot` | — | `{email}` → `204` (always; issues a token if the email exists) |
 | POST | `/{prefix}/password/reset` | — | `{token,password}` → `204` (`422` if the token is invalid/expired/used) |
+| POST | `/{prefix}/invitations/accept` | — | `{token,name,password}` → `201 {data:{id}}` (creates the user; `422` if invalid/expired/revoked) |
 | POST | `/{prefix}/logout` | sanctum | `204` (revokes current token) |
 | POST | `/{prefix}/logout-all` | sanctum | `204` (revokes all tokens) |
 | GET | `/{prefix}/me` | sanctum | `{data:{id,name,email,realm_id}}` |
@@ -51,15 +53,17 @@ no body.
 | POST | `/{prefix}/2fa/confirm` | sanctum | `{code}` → `204` (activates 2FA; `422` on a bad code) |
 | POST | `/{prefix}/2fa/disable` | sanctum | `{code}` → `204` (`422` on a bad code) |
 | POST | `/{prefix}/2fa/recovery-codes` | sanctum | `{data:{recovery_codes}}` (regenerates, replacing the old set) |
+| POST | `/{prefix}/invitations` | sanctum | `{email,metadata?}` → `201 {data:{id,email,expires_at}}` (`422` if the email is already a user) |
+| DELETE | `/{prefix}/invitations/{invitationId}` | sanctum | `204` (revokes a pending invitation) |
 
 Errors are mapped to JSON: invalid credentials → `401`, invalid/expired 2FA challenge token → `401`,
-duplicate email → `422`, invalid reset token → `422`, invalid 2FA code → `422`, 2FA not enrolled →
-`422`, user not found → `404`.
+duplicate email → `422`, invalid reset token → `422`, invalid/expired/revoked invitation → `422`,
+invalid 2FA code → `422`, 2FA not enrolled → `422`, user not found → `404`.
 
 ## Ports (hexagonal)
 
 **Inbound** — resolve and use:
-- `NetCode\Identity\Application\Port\CurrentUser` — the authenticated subject (`user()`,
+- `NetCode\Identity\Application\Ports\CurrentUser` — the authenticated subject (`user()`,
   `userOrNull()`, `tokenId()`); bound `scoped`.
 
 **Outbound** — bind a host adapter to override the default:
@@ -68,6 +72,11 @@ duplicate email → `422`, invalid reset token → `422`, invalid 2FA code → `
 - `PasswordResetNotifier` — how the reset token reaches the user. The default
   `MailPasswordResetNotifier` sends a plain email with the token; override it to send a branded mail
   containing your frontend reset URL.
+- `InvitationNotifier` — how the invitation token reaches the invitee (default `MailInvitationNotifier`,
+  a plain email); override for a branded mail with your frontend accept URL.
+- `InvitationAcceptanceHook` — runs after an invitation is accepted (default no-op). Bind your own to
+  act on the host-interpreted `metadata` (e.g. assign the invited role/tenant) — it receives a typed
+  `AcceptedInvitation { userId, email, realmId, metadata }`.
 
 **Internal** — swappable adapters (defaults wired): `TokenIssuer`/`TokenRevoker` → Sanctum,
 `PasswordHasher` → Laravel Hash, `UserRepository` → Eloquent, `Clock` → `SystemClock`,
@@ -76,5 +85,6 @@ duplicate email → `422`, invalid reset token → `422`, invalid 2FA code → `
 
 ## Events
 
-`UserRegistered` and `UserDeleted` are published via the domain event publisher — subscribe for
-decoupled follow-ups (welcome mail, provisioning, …).
+`UserRegistered`, `UserDeleted`, `PasswordChanged`, `TwoFactorEnabled`/`TwoFactorDisabled` and
+`InvitationAccepted` are published via the domain event publisher — subscribe for decoupled
+follow-ups (welcome mail, provisioning, …).

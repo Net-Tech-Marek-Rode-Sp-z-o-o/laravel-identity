@@ -12,6 +12,8 @@ return [
 
     'password_reset_ttl' => 60,
 
+    'invitation_ttl' => 4320,
+
     'two_factor' => [
 
         'issuer' => env('IDENTITY_2FA_ISSUER'),
