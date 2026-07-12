@@ -100,6 +100,28 @@ An authenticated user invites an email; the invitee accepts with a token, which 
 Roles/permissions are **not** part of this — the intended role rides in `metadata`, and the host's
 acceptance hook (or the access package) turns it into an actual grant.
 
+## Social / linked accounts
+
+Social sign-in is **additional credentials on the one `User`**, not a second identity. A social user
+is passwordless (`password_hash` null) until they set a password (via the reset flow).
+
+- `POST /{prefix}/{provider}/login` `{accessToken}` (public) — the SPA does the OAuth dance and posts
+  the provider access token. `SocialLogin` resolves it through `SocialIdentityProvider` into a
+  provider-agnostic `SocialProfile`, then:
+  1. an existing `LinkedAccount` for `(provider, providerId)` → issue that user a token;
+  2. else a user with the profile's email — **only if the provider says the email is verified** —
+     link the account and issue a token (unverified + existing user → **422**, to prevent takeover);
+  3. else create a passwordless `User`, link the account, issue a token.
+  Returns `{data:{token}}`. Unknown `provider` → **404** (route param is cast via `SocialProvider::tryFrom`).
+- `POST /{prefix}/{provider}/link` `{accessToken}` (authenticated) — `LinkSocialAccount` links the
+  provider account to the current user. A `(provider, providerId)` already linked to **another** user
+  → **409**; already linked to the same user → idempotent **204**.
+
+**Security (non-negotiable):** auto-link by email happens **only** when the provider asserts the email
+is verified — otherwise someone could register a provider account on your email and inherit your user.
+The `SocialProvider` enum (`google`, `facebook`) is owned by the package; Socialite is the adapter
+behind the port.
+
 ## Multi-tenancy (realm)
 
 The schema is realm-aware (`identity_users.realm_id`, unique `(realm_id, email)` with a partial

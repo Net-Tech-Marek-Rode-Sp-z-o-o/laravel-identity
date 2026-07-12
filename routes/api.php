@@ -8,6 +8,7 @@ use NetCode\Identity\Presentation\Http\Controllers\ConfirmTwoFactorController;
 use NetCode\Identity\Presentation\Http\Controllers\DisableTwoFactorController;
 use NetCode\Identity\Presentation\Http\Controllers\EnableTwoFactorController;
 use NetCode\Identity\Presentation\Http\Controllers\InviteUserController;
+use NetCode\Identity\Presentation\Http\Controllers\LinkSocialAccountController;
 use NetCode\Identity\Presentation\Http\Controllers\LoginController;
 use NetCode\Identity\Presentation\Http\Controllers\LogoutAllController;
 use NetCode\Identity\Presentation\Http\Controllers\LogoutController;
@@ -17,6 +18,7 @@ use NetCode\Identity\Presentation\Http\Controllers\RegisterController;
 use NetCode\Identity\Presentation\Http\Controllers\RequestPasswordResetController;
 use NetCode\Identity\Presentation\Http\Controllers\ResetPasswordController;
 use NetCode\Identity\Presentation\Http\Controllers\RevokeInvitationController;
+use NetCode\Identity\Presentation\Http\Controllers\SocialLoginController;
 use NetCode\Identity\Presentation\Http\Controllers\TwoFactorChallengeController;
 
 Route::post('login', LoginController::class);
@@ -24,6 +26,7 @@ Route::post('2fa/challenge', TwoFactorChallengeController::class);
 Route::post('password/forgot', RequestPasswordResetController::class);
 Route::post('password/reset', ResetPasswordController::class);
 Route::post('invitations/accept', AcceptInvitationController::class);
+Route::post('{provider}/login', SocialLoginController::class);
 
 if (config('identity.register_enabled') === true) {
     Route::post('register', RegisterController::class);
@@ -41,4 +44,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::post('invitations', InviteUserController::class);
     Route::delete('invitations/{invitationId}', RevokeInvitationController::class);
+
+    Route::post('{provider}/link', LinkSocialAccountController::class);
 });

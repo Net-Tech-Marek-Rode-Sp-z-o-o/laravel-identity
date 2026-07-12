@@ -55,6 +55,31 @@ final class User extends AggregateRoot
         return $user;
     }
 
+    public static function registerPasswordless(
+        UserId $id,
+        RealmId|null $realmId,
+        Email $email,
+        string $name,
+        DateTimeImmutable $now,
+    ): self {
+        $user = new self(
+            id: $id,
+            realmId: $realmId,
+            email: $email,
+            name: $name,
+            passwordHash: null,
+            twoFactor: null,
+            deletedAt: null,
+        );
+
+        $user->recordThat(new UserRegistered(
+            userId: $id,
+            occurredOn: $now,
+        ));
+
+        return $user;
+    }
+
     public static function reconstitute(
         UserId $id,
         RealmId|null $realmId,

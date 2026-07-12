@@ -20,11 +20,13 @@ use NetCode\Identity\Application\Ports\PasswordResetNotifier;
 use NetCode\Identity\Application\Ports\RealmContext;
 use NetCode\Identity\Application\Ports\RecoveryCodeGenerator;
 use NetCode\Identity\Application\Ports\SecretEncrypter;
+use NetCode\Identity\Application\Ports\SocialIdentityProvider;
 use NetCode\Identity\Application\Ports\TokenGenerator;
 use NetCode\Identity\Application\Ports\TokenIssuer;
 use NetCode\Identity\Application\Ports\TokenRevoker;
 use NetCode\Identity\Application\Ports\Totp;
 use NetCode\Identity\Domain\Contracts\InvitationRepository;
+use NetCode\Identity\Domain\Contracts\LinkedAccountRepository;
 use NetCode\Identity\Domain\Contracts\PasswordResetTokenRepository;
 use NetCode\Identity\Domain\Contracts\UserRepository;
 use NetCode\Identity\Domain\Exceptions\EmailAlreadyTakenException;
@@ -33,11 +35,14 @@ use NetCode\Identity\Domain\Exceptions\InvalidCredentialsException;
 use NetCode\Identity\Domain\Exceptions\InvalidInvitationException;
 use NetCode\Identity\Domain\Exceptions\InvalidResetTokenException;
 use NetCode\Identity\Domain\Exceptions\InvalidTwoFactorCodeException;
+use NetCode\Identity\Domain\Exceptions\SocialAccountAlreadyLinkedException;
+use NetCode\Identity\Domain\Exceptions\SocialEmailNotVerifiedException;
 use NetCode\Identity\Domain\Exceptions\TwoFactorNotEnrolledException;
 use NetCode\Identity\Domain\Exceptions\UserNotFoundException;
 use NetCode\Identity\Infrastructure\Auth\SanctumCurrentUser;
 use NetCode\Identity\Infrastructure\Challenge\SignedChallengeTokenFactory;
 use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentInvitationRepository;
+use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentLinkedAccountRepository;
 use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentPasswordResetTokenRepository;
 use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentUserRepository;
 use NetCode\Identity\Infrastructure\Invitation\NullInvitationAcceptanceHook;
@@ -51,6 +56,7 @@ use NetCode\Identity\Infrastructure\Security\LaravelSecretEncrypter;
 use NetCode\Identity\Infrastructure\Security\PragmaRxTotp;
 use NetCode\Identity\Infrastructure\Security\RandomRecoveryCodeGenerator;
 use NetCode\Identity\Infrastructure\Security\RandomTokenGenerator;
+use NetCode\Identity\Infrastructure\Social\SocialiteIdentityProvider;
 use NetCode\Kit\Clock;
 use NetCode\Kit\SystemClock;
 use PragmaRX\Google2FA\Google2FA;
@@ -75,6 +81,8 @@ final class IdentityServiceProvider extends ServiceProvider
         $this->app->bind(InvitationRepository::class, EloquentInvitationRepository::class);
         $this->app->bind(InvitationNotifier::class, MailInvitationNotifier::class);
         $this->app->bind(InvitationAcceptanceHook::class, NullInvitationAcceptanceHook::class);
+        $this->app->bind(LinkedAccountRepository::class, EloquentLinkedAccountRepository::class);
+        $this->app->bind(SocialIdentityProvider::class, SocialiteIdentityProvider::class);
         $this->app->scoped(CurrentUser::class, SanctumCurrentUser::class);
 
         $this->app->bind(Totp::class, fn (): Totp => new PragmaRxTotp(new Google2FA));
@@ -136,6 +144,8 @@ final class IdentityServiceProvider extends ServiceProvider
         $handler->renderable(fn (InvalidInvitationException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
         $handler->renderable(fn (InvalidTwoFactorCodeException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
         $handler->renderable(fn (TwoFactorNotEnrolledException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
+        $handler->renderable(fn (SocialEmailNotVerifiedException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 422));
+        $handler->renderable(fn (SocialAccountAlreadyLinkedException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 409));
         $handler->renderable(fn (UserNotFoundException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], 404));
     }
 }

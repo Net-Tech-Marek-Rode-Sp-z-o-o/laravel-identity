@@ -46,6 +46,7 @@ no body.
 | POST | `/{prefix}/password/forgot` | — | `{email}` → `204` (always; issues a token if the email exists) |
 | POST | `/{prefix}/password/reset` | — | `{token,password}` → `204` (`422` if the token is invalid/expired/used) |
 | POST | `/{prefix}/invitations/accept` | — | `{token,name,password}` → `201 {data:{id}}` (creates the user; `422` if invalid/expired/revoked) |
+| POST | `/{prefix}/{provider}/login` | — | `{accessToken}` → `{data:{token}}` (social login/register; `provider` = `google`\|`facebook`, else `404`) |
 | POST | `/{prefix}/logout` | sanctum | `204` (revokes current token) |
 | POST | `/{prefix}/logout-all` | sanctum | `204` (revokes all tokens) |
 | GET | `/{prefix}/me` | sanctum | `{data:{id,name,email,realm_id}}` |
@@ -55,10 +56,12 @@ no body.
 | POST | `/{prefix}/2fa/recovery-codes` | sanctum | `{data:{recovery_codes}}` (regenerates, replacing the old set) |
 | POST | `/{prefix}/invitations` | sanctum | `{email,metadata?}` → `201 {data:{id,email,expires_at}}` (`422` if the email is already a user) |
 | DELETE | `/{prefix}/invitations/{invitationId}` | sanctum | `204` (revokes a pending invitation) |
+| POST | `/{prefix}/{provider}/link` | sanctum | `{accessToken}` → `204` (links a social account to the current user; `409` if already linked elsewhere) |
 
 Errors are mapped to JSON: invalid credentials → `401`, invalid/expired 2FA challenge token → `401`,
 duplicate email → `422`, invalid reset token → `422`, invalid/expired/revoked invitation → `422`,
-invalid 2FA code → `422`, 2FA not enrolled → `422`, user not found → `404`.
+invalid 2FA code → `422`, 2FA not enrolled → `422`, unverified social email on an existing user →
+`422`, social account already linked → `409`, user not found → `404`.
 
 ## Ports (hexagonal)
 
@@ -81,7 +84,9 @@ invalid 2FA code → `422`, 2FA not enrolled → `422`, user not found → `404`
 **Internal** — swappable adapters (defaults wired): `TokenIssuer`/`TokenRevoker` → Sanctum,
 `PasswordHasher` → Laravel Hash, `UserRepository` → Eloquent, `Clock` → `SystemClock`,
 `Totp` → `pragmarx/google2fa`, `SecretEncrypter` → Laravel `Crypt`, `RecoveryCodeGenerator` → random,
-`ChallengeTokenFactory` → a stateless encrypted token (no challenge table).
+`ChallengeTokenFactory` → a stateless encrypted token (no challenge table), `SocialIdentityProvider`
+→ `laravel/socialite` (configure each provider's client id/secret in the host's `config/services.php`;
+the SPA obtains the provider access token and posts it to `/{provider}/login|link`).
 
 ## Events
 
