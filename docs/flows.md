@@ -13,7 +13,10 @@ End-to-end behaviour of the package. Each flow is covered by a feature test in
    - resolves the current realm from `RealmContext` (null = global pool),
    - rejects a duplicate `(realm, email)` with **422** (`EmailAlreadyTakenException`),
    - hashes the password, creates the `User` aggregate, persists it,
-   - the repository publishes `UserRegistered`.
+   - the repository publishes `UserRegistered`,
+   - the `PostRegistrationHook` runs (same transaction) with the new `RegisteredUser` and a
+     host-typed `RegistrationPayload` built from the request by `RegistrationPayloadFactory` (default
+     `NoRegistrationPayload`) — the seam for "registration also provisions X".
 3. Responds `201 { data: { id } }`.
 
 ## Login

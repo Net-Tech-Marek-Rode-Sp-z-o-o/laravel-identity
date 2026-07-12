@@ -80,6 +80,11 @@ invalid 2FA code → `422`, 2FA not enrolled → `422`, unverified social email 
 - `InvitationAcceptanceHook` — runs after an invitation is accepted (default no-op). Bind your own to
   act on the host-interpreted `metadata` (e.g. assign the invited role/tenant) — it receives a typed
   `AcceptedInvitation { userId, email, realmId, metadata }`.
+- `PostRegistrationHook<TPayload>` + `RegistrationPayloadFactory` — run host logic inside the register
+  transaction. The factory maps the register request into a host-typed `RegistrationPayload` (defaults
+  to `NoRegistrationPayload`); the hook (default no-op) receives the new `RegisteredUser` + that typed
+  payload — e.g. provision an organization from extra register fields. Complementary to the
+  `UserRegistered` event (hook = finish registration atomically; event = broadcast the fact).
 
 **Internal** — swappable adapters (defaults wired): `TokenIssuer`/`TokenRevoker` → Sanctum,
 `PasswordHasher` → Laravel Hash, `UserRepository` → Eloquent, `Clock` → `SystemClock`,

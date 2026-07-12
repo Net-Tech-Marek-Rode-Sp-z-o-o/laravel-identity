@@ -10,15 +10,24 @@ use NetCode\Identity\Domain\Events\UserRegistered;
 use NetCode\Identity\Domain\Exceptions\EmailAlreadyTakenException;
 use NetCode\Identity\Domain\ValueObjects\RealmId;
 use NetCode\Identity\Domain\ValueObjects\UserId;
+use NetCode\Identity\Infrastructure\Registration\NoRegistrationPayload;
 use NetCode\Identity\Tests\Support\FakePasswordHasher;
 use NetCode\Identity\Tests\Support\FixedClock;
 use NetCode\Identity\Tests\Support\FixedRealmContext;
 use NetCode\Identity\Tests\Support\InMemoryUserRepository;
+use NetCode\Identity\Tests\Support\RecordingPostRegistrationHook;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RegisterHandlerTest extends TestCase
 {
+    private RecordingPostRegistrationHook $hook;
+
+    protected function setUp(): void
+    {
+        $this->hook = new RecordingPostRegistrationHook;
+    }
+
     private function handler(InMemoryUserRepository $repo, FixedRealmContext $realm = new FixedRealmContext): RegisterHandler
     {
         return new RegisterHandler(
@@ -26,7 +35,13 @@ final class RegisterHandlerTest extends TestCase
             realm: $realm,
             users: $repo,
             hasher: new FakePasswordHasher,
+            hook: $this->hook,
         );
+    }
+
+    private function command(string $email = 'ada@example.test', string $name = 'Ada'): Register
+    {
+        return new Register(name: $name, email: $email, password: 'secret123', payload: new NoRegistrationPayload);
     }
 
     #[Test]
@@ -34,11 +49,7 @@ final class RegisterHandlerTest extends TestCase
     {
         $repo = new InMemoryUserRepository;
 
-        $id = ($this->handler($repo))(new Register(
-            name: 'Ada',
-            email: 'Ada@Example.test',
-            password: 'secret123',
-        ));
+        $id = ($this->handler($repo))($this->command(email: 'Ada@Example.test'));
 
         $user = $repo->getById(UserId::fromString($id));
         $this->assertSame('Ada', $user->name());
@@ -48,16 +59,24 @@ final class RegisterHandlerTest extends TestCase
     }
 
     #[Test]
+    public function it_runs_the_post_registration_hook_with_the_new_user_and_payload(): void
+    {
+        $repo = new InMemoryUserRepository;
+
+        $id = ($this->handler($repo))($this->command());
+
+        $this->assertSame($id, $this->hook->user?->id);
+        $this->assertSame('ada@example.test', $this->hook->user?->email);
+        $this->assertInstanceOf(NoRegistrationPayload::class, $this->hook->payload);
+    }
+
+    #[Test]
     public function it_registers_into_the_current_realm(): void
     {
         $realm = RealmId::random();
         $repo = new InMemoryUserRepository;
 
-        $id = ($this->handler($repo, new FixedRealmContext($realm)))(new Register(
-            name: 'Ada',
-            email: 'ada@example.test',
-            password: 'secret123',
-        ));
+        $id = ($this->handler($repo, new FixedRealmContext($realm)))($this->command());
 
         $this->assertTrue($repo->getById(UserId::fromString($id))->realmId()?->equals($realm));
     }
@@ -67,10 +86,10 @@ final class RegisterHandlerTest extends TestCase
     {
         $repo = new InMemoryUserRepository;
         $handler = $this->handler($repo);
-        $handler(new Register(name: 'Ada', email: 'ada@example.test', password: 'secret123'));
+        $handler($this->command());
 
         $this->expectException(EmailAlreadyTakenException::class);
 
-        $handler(new Register(name: 'Ada II', email: 'ada@example.test', password: 'secret123'));
+        $handler($this->command(name: 'Ada II'));
     }
 }

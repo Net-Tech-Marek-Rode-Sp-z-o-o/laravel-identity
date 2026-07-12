@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace NetCode\Identity\Presentation\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use NetCode\Bus\Command\CommandBus;
 use NetCode\Identity\Application\Commands\Register\Register;
+use NetCode\Identity\Application\Ports\RegistrationPayloadFactory;
 use NetCode\Identity\Presentation\Http\Data\RegisterData;
 use NetCode\Identity\Presentation\Http\Resources\RegisteredUserResource;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +17,8 @@ final readonly class RegisterController
 {
     public function __construct(
         private CommandBus $bus,
+        private RegistrationPayloadFactory $payloads,
+        private Request $request,
     ) {}
 
     public function __invoke(
@@ -24,6 +28,7 @@ final readonly class RegisterController
             name: $data->name,
             email: $data->email,
             password: $data->password,
+            payload: $this->payloads->fromRequest($this->request),
         ));
 
         return new RegisteredUserResource($userId)->response()->setStatusCode(Response::HTTP_CREATED);

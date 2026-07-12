@@ -17,8 +17,10 @@ use NetCode\Identity\Application\Ports\InvitationAcceptanceHook;
 use NetCode\Identity\Application\Ports\InvitationNotifier;
 use NetCode\Identity\Application\Ports\PasswordHasher;
 use NetCode\Identity\Application\Ports\PasswordResetNotifier;
+use NetCode\Identity\Application\Ports\PostRegistrationHook;
 use NetCode\Identity\Application\Ports\RealmContext;
 use NetCode\Identity\Application\Ports\RecoveryCodeGenerator;
+use NetCode\Identity\Application\Ports\RegistrationPayloadFactory;
 use NetCode\Identity\Application\Ports\SecretEncrypter;
 use NetCode\Identity\Application\Ports\SocialIdentityProvider;
 use NetCode\Identity\Application\Ports\TokenGenerator;
@@ -49,6 +51,8 @@ use NetCode\Identity\Infrastructure\Invitation\NullInvitationAcceptanceHook;
 use NetCode\Identity\Infrastructure\Mail\MailInvitationNotifier;
 use NetCode\Identity\Infrastructure\Mail\MailPasswordResetNotifier;
 use NetCode\Identity\Infrastructure\Realm\NullRealmContext;
+use NetCode\Identity\Infrastructure\Registration\DefaultRegistrationPayloadFactory;
+use NetCode\Identity\Infrastructure\Registration\NullPostRegistrationHook;
 use NetCode\Identity\Infrastructure\Sanctum\SanctumTokenIssuer;
 use NetCode\Identity\Infrastructure\Sanctum\SanctumTokenRevoker;
 use NetCode\Identity\Infrastructure\Security\HashPasswordHasher;
@@ -83,6 +87,8 @@ final class IdentityServiceProvider extends ServiceProvider
         $this->app->bind(InvitationAcceptanceHook::class, NullInvitationAcceptanceHook::class);
         $this->app->bind(LinkedAccountRepository::class, EloquentLinkedAccountRepository::class);
         $this->app->bind(SocialIdentityProvider::class, SocialiteIdentityProvider::class);
+        $this->app->bind(PostRegistrationHook::class, NullPostRegistrationHook::class);
+        $this->app->bind(RegistrationPayloadFactory::class, DefaultRegistrationPayloadFactory::class);
         $this->app->scoped(CurrentUser::class, SanctumCurrentUser::class);
 
         $this->app->bind(Totp::class, fn (): Totp => new PragmaRxTotp(new Google2FA));
