@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "net-code/laravel-identity",
-    "description": "Reusable Sanctum-based authentication for Laravel: users, registration, login, sessions — hexagonal ports & adapters.",
-    "keywords": ["laravel", "authentication", "identity", "sanctum", "ddd"],
+    "description": "Reusable, Sanctum-based authentication for Laravel — registration, login, password reset, TOTP two-factor, invitations, and social login — built with hexagonal ports & adapters.",
+    "keywords": ["laravel", "authentication", "identity", "sanctum", "two-factor", "invitations", "social-login", "oauth", "ddd"],
     "type": "library",
     "license": "MIT",
     "require": {
