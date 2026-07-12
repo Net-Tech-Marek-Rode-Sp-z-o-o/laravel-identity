@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Infrastructure\Security;
 
-use NetCode\Identity\Application\Port\TokenGenerator;
+use NetCode\Identity\Application\Ports\TokenGenerator;
 
 final class RandomTokenGenerator implements TokenGenerator
 {

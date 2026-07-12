@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace NetCode\Identity\Infrastructure\DataAccess\Repositories;
 
 use NetCode\Domain\DomainEventPublisher;
-use NetCode\Identity\Domain\Contract\UserRepository;
-use NetCode\Identity\Domain\Exception\UserNotFoundException;
+use NetCode\Identity\Domain\Contracts\UserRepository;
+use NetCode\Identity\Domain\Exceptions\UserNotFoundException;
 use NetCode\Identity\Domain\User;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\RealmId;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Tests\Support;
 
-use NetCode\Identity\Application\Port\TokenGenerator;
+use NetCode\Identity\Application\Ports\TokenGenerator;
 
 final class FixedTokenGenerator implements TokenGenerator
 {

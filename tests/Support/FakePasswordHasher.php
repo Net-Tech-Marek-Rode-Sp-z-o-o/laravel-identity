@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Tests\Support;
 
-use NetCode\Identity\Application\Port\PasswordHasher;
+use NetCode\Identity\Application\Ports\PasswordHasher;
 
 final class FakePasswordHasher implements PasswordHasher
 {

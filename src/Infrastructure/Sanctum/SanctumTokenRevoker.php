@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace NetCode\Identity\Infrastructure\Sanctum;
 
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
-use NetCode\Identity\Application\Port\TokenRevoker;
+use NetCode\Identity\Application\Ports\TokenRevoker;
 use NetCode\Identity\Infrastructure\DataAccess\Models\UserModel;
 use RuntimeException;
 

@@ -6,12 +6,12 @@ namespace NetCode\Identity\Domain;
 
 use DateTimeImmutable;
 use NetCode\Domain\AggregateRoot;
-use NetCode\Identity\Domain\Event\PasswordChanged;
-use NetCode\Identity\Domain\Event\TwoFactorDisabled;
-use NetCode\Identity\Domain\Event\TwoFactorEnabled;
-use NetCode\Identity\Domain\Event\UserDeleted;
-use NetCode\Identity\Domain\Event\UserRegistered;
-use NetCode\Identity\Domain\Exception\TwoFactorNotEnrolledException;
+use NetCode\Identity\Domain\Events\PasswordChanged;
+use NetCode\Identity\Domain\Events\TwoFactorDisabled;
+use NetCode\Identity\Domain\Events\TwoFactorEnabled;
+use NetCode\Identity\Domain\Events\UserDeleted;
+use NetCode\Identity\Domain\Events\UserRegistered;
+use NetCode\Identity\Domain\Exceptions\TwoFactorNotEnrolledException;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\RealmId;
 use NetCode\Identity\Domain\ValueObjects\TwoFactorSettings;

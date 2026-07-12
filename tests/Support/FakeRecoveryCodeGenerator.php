@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Tests\Support;
 
-use NetCode\Identity\Application\Port\RecoveryCodeGenerator;
+use NetCode\Identity\Application\Ports\RecoveryCodeGenerator;
 
 final class FakeRecoveryCodeGenerator implements RecoveryCodeGenerator
 {

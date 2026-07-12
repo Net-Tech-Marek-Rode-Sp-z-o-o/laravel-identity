@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace NetCode\Identity\Infrastructure\Auth;
 
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
-use NetCode\Identity\Application\Port\AuthenticatedUser;
-use NetCode\Identity\Application\Port\CurrentUser;
+use NetCode\Identity\Application\Ports\AuthenticatedUser;
+use NetCode\Identity\Application\Ports\CurrentUser;
 use NetCode\Identity\Infrastructure\DataAccess\Models\UserModel;
 use RuntimeException;
 

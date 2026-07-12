@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Infrastructure\Sanctum;
 
-use NetCode\Identity\Application\Port\TokenIssuer;
+use NetCode\Identity\Application\Ports\TokenIssuer;
 use NetCode\Identity\Domain\ValueObjects\UserId;
 use NetCode\Identity\Infrastructure\DataAccess\Models\UserModel;
 

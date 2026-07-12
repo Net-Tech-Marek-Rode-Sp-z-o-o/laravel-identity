@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Tests\Support;
 
-use NetCode\Identity\Domain\Contract\PasswordResetTokenRepository;
+use NetCode\Identity\Domain\Contracts\PasswordResetTokenRepository;
 use NetCode\Identity\Domain\PasswordResetToken;
 use NetCode\Identity\Domain\ValueObjects\PasswordResetTokenId;
 

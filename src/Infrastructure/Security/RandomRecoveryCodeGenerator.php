@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace NetCode\Identity\Infrastructure\Security;
 
 use Illuminate\Support\Str;
-use NetCode\Identity\Application\Port\RecoveryCodeGenerator;
+use NetCode\Identity\Application\Ports\RecoveryCodeGenerator;
 
 final class RandomRecoveryCodeGenerator implements RecoveryCodeGenerator
 {

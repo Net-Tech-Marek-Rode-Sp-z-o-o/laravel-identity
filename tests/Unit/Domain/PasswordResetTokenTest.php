@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace NetCode\Identity\Tests\Unit\Domain;
 
 use DateTimeImmutable;
-use NetCode\Identity\Domain\Exception\InvalidResetTokenException;
+use NetCode\Identity\Domain\Exceptions\InvalidResetTokenException;
 use NetCode\Identity\Domain\PasswordResetToken;
 use NetCode\Identity\Domain\ValueObjects\PasswordResetTokenId;
 use NetCode\Identity\Domain\ValueObjects\UserId;

@@ -7,7 +7,7 @@ namespace NetCode\Identity\Tests\Feature;
 use DateTimeImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use NetCode\Identity\Domain\Contract\UserRepository;
+use NetCode\Identity\Domain\Contracts\UserRepository;
 use NetCode\Identity\Domain\User;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\RealmId;

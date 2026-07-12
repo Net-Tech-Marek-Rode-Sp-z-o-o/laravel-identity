@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace NetCode\Identity\Tests\Support;
 
 use Illuminate\Support\Str;
-use NetCode\Identity\Application\Port\SecretEncrypter;
+use NetCode\Identity\Application\Ports\SecretEncrypter;
 
 final class FakeSecretEncrypter implements SecretEncrypter
 {

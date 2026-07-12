@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Tests\Support;
 
-use NetCode\Identity\Application\Port\TokenRevoker;
+use NetCode\Identity\Application\Ports\TokenRevoker;
 
 final class RecordingTokenRevoker implements TokenRevoker
 {

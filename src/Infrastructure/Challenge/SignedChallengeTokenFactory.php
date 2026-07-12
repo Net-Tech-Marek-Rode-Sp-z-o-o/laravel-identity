@@ -6,7 +6,7 @@ namespace NetCode\Identity\Infrastructure\Challenge;
 
 use DateInterval;
 use Illuminate\Contracts\Encryption\Encrypter;
-use NetCode\Identity\Application\Port\ChallengeTokenFactory;
+use NetCode\Identity\Application\Ports\ChallengeTokenFactory;
 use NetCode\Identity\Domain\ValueObjects\UserId;
 use NetCode\Kit\Clock;
 use Throwable;

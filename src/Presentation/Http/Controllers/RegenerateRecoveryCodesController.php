@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace NetCode\Identity\Presentation\Http\Controllers;
 
 use NetCode\Bus\Command\CommandBus;
-use NetCode\Identity\Application\Command\RegenerateRecoveryCodes\RegenerateRecoveryCodes;
-use NetCode\Identity\Application\Port\CurrentUser;
+use NetCode\Identity\Application\Commands\RegenerateRecoveryCodes\RegenerateRecoveryCodes;
+use NetCode\Identity\Application\Ports\CurrentUser;
 use NetCode\Identity\Domain\ValueObjects\UserId;
-use NetCode\Identity\Presentation\Http\Resource\RecoveryCodesResource;
+use NetCode\Identity\Presentation\Http\Resources\RecoveryCodesResource;
 
 final readonly class RegenerateRecoveryCodesController
 {

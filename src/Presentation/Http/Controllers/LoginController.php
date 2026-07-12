@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace NetCode\Identity\Presentation\Http\Controllers;
 
 use NetCode\Bus\Command\CommandBus;
-use NetCode\Identity\Application\Command\Login\Login;
+use NetCode\Identity\Application\Commands\Login\Login;
 use NetCode\Identity\Presentation\Http\Data\LoginData;
-use NetCode\Identity\Presentation\Http\Resource\LoginResource;
+use NetCode\Identity\Presentation\Http\Resources\LoginResource;
 
 final readonly class LoginController
 {

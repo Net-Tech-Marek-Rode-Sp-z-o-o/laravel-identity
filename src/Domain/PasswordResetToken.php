@@ -6,7 +6,7 @@ namespace NetCode\Identity\Domain;
 
 use DateTimeImmutable;
 use NetCode\Domain\AggregateRoot;
-use NetCode\Identity\Domain\Exception\InvalidResetTokenException;
+use NetCode\Identity\Domain\Exceptions\InvalidResetTokenException;
 use NetCode\Identity\Domain\ValueObjects\PasswordResetTokenId;
 use NetCode\Identity\Domain\ValueObjects\UserId;
 

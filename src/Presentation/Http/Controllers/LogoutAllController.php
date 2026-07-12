@@ -6,7 +6,7 @@ namespace NetCode\Identity\Presentation\Http\Controllers;
 
 use Illuminate\Http\Response;
 use NetCode\Bus\Command\CommandBus;
-use NetCode\Identity\Application\Command\LogoutAll\LogoutAll;
+use NetCode\Identity\Application\Commands\LogoutAll\LogoutAll;
 
 final readonly class LogoutAllController
 {

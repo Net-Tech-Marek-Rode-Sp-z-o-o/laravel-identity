@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace NetCode\Identity\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use NetCode\Identity\Application\Port\PasswordResetNotifier;
+use NetCode\Identity\Application\Ports\PasswordResetNotifier;
 use NetCode\Identity\Tests\Support\SpyPasswordResetNotifier;
 use NetCode\Identity\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;

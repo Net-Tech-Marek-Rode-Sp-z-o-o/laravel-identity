@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Infrastructure\Security;
 
-use NetCode\Identity\Application\Port\Totp;
+use NetCode\Identity\Application\Ports\Totp;
 use PragmaRX\Google2FA\Google2FA;
 
 final readonly class PragmaRxTotp implements Totp

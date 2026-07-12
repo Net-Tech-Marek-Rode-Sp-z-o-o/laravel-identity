@@ -6,8 +6,8 @@ namespace NetCode\Identity\Presentation\Http\Controllers;
 
 use Illuminate\Http\Response;
 use NetCode\Bus\Command\CommandBus;
-use NetCode\Identity\Application\Command\ConfirmTwoFactor\ConfirmTwoFactor;
-use NetCode\Identity\Application\Port\CurrentUser;
+use NetCode\Identity\Application\Commands\ConfirmTwoFactor\ConfirmTwoFactor;
+use NetCode\Identity\Application\Ports\CurrentUser;
 use NetCode\Identity\Domain\ValueObjects\UserId;
 use NetCode\Identity\Presentation\Http\Data\TwoFactorCodeData;
 

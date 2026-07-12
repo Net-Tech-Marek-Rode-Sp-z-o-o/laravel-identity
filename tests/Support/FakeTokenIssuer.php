@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Tests\Support;
 
-use NetCode\Identity\Application\Port\TokenIssuer;
+use NetCode\Identity\Application\Ports\TokenIssuer;
 use NetCode\Identity\Domain\ValueObjects\UserId;
 
 final class FakeTokenIssuer implements TokenIssuer

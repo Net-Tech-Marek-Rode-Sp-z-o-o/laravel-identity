@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace NetCode\Identity\Tests\Unit\Domain;
 
 use DateTimeImmutable;
-use NetCode\Identity\Domain\Event\UserDeleted;
-use NetCode\Identity\Domain\Event\UserRegistered;
+use NetCode\Identity\Domain\Events\UserDeleted;
+use NetCode\Identity\Domain\Events\UserRegistered;
 use NetCode\Identity\Domain\User;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\UserId;

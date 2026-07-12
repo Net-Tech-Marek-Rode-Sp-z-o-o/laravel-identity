@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Tests\Support;
 
-use NetCode\Identity\Application\Port\Totp;
+use NetCode\Identity\Application\Ports\Totp;
 
 final class FakeTotp implements Totp
 {

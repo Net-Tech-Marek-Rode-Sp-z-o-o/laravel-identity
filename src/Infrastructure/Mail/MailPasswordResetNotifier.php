@@ -7,7 +7,7 @@ namespace NetCode\Identity\Infrastructure\Mail;
 use DateTimeImmutable;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Mail\Message;
-use NetCode\Identity\Application\Port\PasswordResetNotifier;
+use NetCode\Identity\Application\Ports\PasswordResetNotifier;
 use NetCode\Identity\Domain\ValueObjects\Email;
 
 final readonly class MailPasswordResetNotifier implements PasswordResetNotifier

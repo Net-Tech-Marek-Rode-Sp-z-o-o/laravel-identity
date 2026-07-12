@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace NetCode\Identity\Tests\Unit\Domain;
 
 use DateTimeImmutable;
-use NetCode\Identity\Domain\Event\TwoFactorDisabled;
-use NetCode\Identity\Domain\Event\TwoFactorEnabled;
-use NetCode\Identity\Domain\Exception\TwoFactorNotEnrolledException;
+use NetCode\Identity\Domain\Events\TwoFactorDisabled;
+use NetCode\Identity\Domain\Events\TwoFactorEnabled;
+use NetCode\Identity\Domain\Exceptions\TwoFactorNotEnrolledException;
 use NetCode\Identity\Domain\User;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\TwoFactorSettings;

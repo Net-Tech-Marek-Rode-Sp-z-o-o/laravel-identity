@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace NetCode\Identity\Presentation\Http\Controllers;
 
-use NetCode\Identity\Application\Port\CurrentUser;
-use NetCode\Identity\Presentation\Http\Resource\MeResource;
+use NetCode\Identity\Application\Ports\CurrentUser;
+use NetCode\Identity\Presentation\Http\Resources\MeResource;
 
 final readonly class MeController
 {

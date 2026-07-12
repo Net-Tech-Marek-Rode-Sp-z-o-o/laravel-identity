@@ -6,7 +6,7 @@ namespace NetCode\Identity\Presentation\Http\Controllers;
 
 use Illuminate\Http\Response;
 use NetCode\Bus\Command\CommandBus;
-use NetCode\Identity\Application\Command\ResetPassword\ResetPassword;
+use NetCode\Identity\Application\Commands\ResetPassword\ResetPassword;
 use NetCode\Identity\Presentation\Http\Data\ResetPasswordData;
 
 final readonly class ResetPasswordController

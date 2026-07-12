@@ -6,9 +6,9 @@ namespace NetCode\Identity\Presentation\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use NetCode\Bus\Command\CommandBus;
-use NetCode\Identity\Application\Command\Register\Register;
+use NetCode\Identity\Application\Commands\Register\Register;
 use NetCode\Identity\Presentation\Http\Data\RegisterData;
-use NetCode\Identity\Presentation\Http\Resource\RegisteredUserResource;
+use NetCode\Identity\Presentation\Http\Resources\RegisteredUserResource;
 
 final readonly class RegisterController
 {

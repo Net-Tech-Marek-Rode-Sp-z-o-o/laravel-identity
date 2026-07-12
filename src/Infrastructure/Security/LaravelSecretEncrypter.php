@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace NetCode\Identity\Infrastructure\Security;
 
 use Illuminate\Contracts\Encryption\Encrypter;
-use NetCode\Identity\Application\Port\SecretEncrypter;
+use NetCode\Identity\Application\Ports\SecretEncrypter;
 
 final readonly class LaravelSecretEncrypter implements SecretEncrypter
 {
