@@ -17,6 +17,7 @@
         "net-code/laravel-bus": "^0.1.0",
         "net-code/laravel-domain": "^0.1.0",
         "net-code/laravel-kit": "^0.3.0",
+        "pragmarx/google2fa": "^8.0",
         "spatie/laravel-data": "^4.23"
     },
     "require-dev": {

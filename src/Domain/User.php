@@ -7,10 +7,14 @@ namespace NetCode\Identity\Domain;
 use DateTimeImmutable;
 use NetCode\Domain\AggregateRoot;
 use NetCode\Identity\Domain\Event\PasswordChanged;
+use NetCode\Identity\Domain\Event\TwoFactorDisabled;
+use NetCode\Identity\Domain\Event\TwoFactorEnabled;
 use NetCode\Identity\Domain\Event\UserDeleted;
 use NetCode\Identity\Domain\Event\UserRegistered;
+use NetCode\Identity\Domain\Exception\TwoFactorNotEnrolledException;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\RealmId;
+use NetCode\Identity\Domain\ValueObjects\TwoFactorSettings;
 use NetCode\Identity\Domain\ValueObjects\UserId;
 
 final class User extends AggregateRoot
@@ -21,6 +25,7 @@ final class User extends AggregateRoot
         private readonly Email $email,
         private string $name,
         private string|null $passwordHash,
+        private TwoFactorSettings|null $twoFactor,
         private DateTimeImmutable|null $deletedAt,
     ) {}
 
@@ -38,6 +43,7 @@ final class User extends AggregateRoot
             email: $email,
             name: $name,
             passwordHash: $passwordHash,
+            twoFactor: null,
             deletedAt: null,
         );
 
@@ -55,6 +61,7 @@ final class User extends AggregateRoot
         Email $email,
         string $name,
         string|null $passwordHash,
+        TwoFactorSettings|null $twoFactor,
         DateTimeImmutable|null $deletedAt,
     ): self {
         return new self(
@@ -63,6 +70,7 @@ final class User extends AggregateRoot
             email: $email,
             name: $name,
             passwordHash: $passwordHash,
+            twoFactor: $twoFactor,
             deletedAt: $deletedAt,
         );
     }
@@ -88,6 +96,80 @@ final class User extends AggregateRoot
             userId: $this->id,
             occurredOn: $now,
         ));
+    }
+
+    public function enableTwoFactor(TwoFactorSettings $settings): void
+    {
+        $this->twoFactor = $settings;
+    }
+
+    /** @throws TwoFactorNotEnrolledException */
+    public function confirmTwoFactor(DateTimeImmutable $at): void
+    {
+        if ($this->twoFactor === null) {
+            throw TwoFactorNotEnrolledException::create();
+        }
+
+        $this->twoFactor = $this->twoFactor->confirm($at);
+
+        $this->recordThat(new TwoFactorEnabled(
+            userId: $this->id,
+            occurredOn: $at,
+        ));
+    }
+
+    /** @throws TwoFactorNotEnrolledException */
+    public function disableTwoFactor(DateTimeImmutable $now): void
+    {
+        if ($this->twoFactor === null) {
+            throw TwoFactorNotEnrolledException::create();
+        }
+
+        $this->twoFactor = null;
+
+        $this->recordThat(new TwoFactorDisabled(
+            userId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    /**
+     * @param list<string> $hashedCodes
+     *
+     * @throws TwoFactorNotEnrolledException
+     */
+    public function regenerateRecoveryCodes(array $hashedCodes): void
+    {
+        if ($this->twoFactor === null || ! $this->twoFactor->isConfirmed()) {
+            throw TwoFactorNotEnrolledException::create();
+        }
+
+        $this->twoFactor = $this->twoFactor->withRecoveryCodes($hashedCodes);
+    }
+
+    /** @throws TwoFactorNotEnrolledException */
+    public function consumeRecoveryCode(string $hashedCode): void
+    {
+        if ($this->twoFactor === null) {
+            throw TwoFactorNotEnrolledException::create();
+        }
+
+        $this->twoFactor = $this->twoFactor->withoutRecoveryCode($hashedCode);
+    }
+
+    public function hasActiveTwoFactor(): bool
+    {
+        return $this->twoFactor !== null && $this->twoFactor->isConfirmed();
+    }
+
+    public function hasRecoveryCode(string $hashedCode): bool
+    {
+        return $this->twoFactor !== null && $this->twoFactor->hasRecoveryCode($hashedCode);
+    }
+
+    public function twoFactor(): TwoFactorSettings|null
+    {
+        return $this->twoFactor;
     }
 
     public function id(): UserId

@@ -12,4 +12,12 @@ return [
 
     'password_reset_ttl' => 60,
 
+    'two_factor' => [
+
+        'issuer' => env('IDENTITY_2FA_ISSUER'),
+
+        'challenge_ttl' => 5,
+
+    ],
+
 ];

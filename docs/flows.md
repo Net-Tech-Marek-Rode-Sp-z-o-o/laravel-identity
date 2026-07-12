@@ -38,6 +38,32 @@ End-to-end behaviour of the package. Each flow is covered by a feature test in
 The default `MailPasswordResetNotifier` emails the raw token; a host binds its own notifier to send a
 branded email carrying its frontend reset URL.
 
+## Two-factor authentication (TOTP)
+
+Enrolment is a two-step *enable → confirm* so a user cannot lock themselves out with a mistyped
+secret. The TOTP secret is stored **encrypted** (`SecretEncrypter`); recovery codes are stored
+**SHA-256 hashed** and shown in plaintext only once.
+
+- `POST /{prefix}/2fa/enable` (authenticated) — `EnableTwoFactor` generates a secret and a set of
+  recovery codes, stores them as a **pending** enrolment, and returns `{secret, otpAuthUri,
+  recoveryCodes}`. Not yet active.
+- `POST /{prefix}/2fa/confirm` `{code}` — `ConfirmTwoFactor` verifies a TOTP code against the pending
+  secret and activates 2FA (emitting `TwoFactorEnabled`). A wrong code → **422**.
+- `POST /{prefix}/2fa/disable` `{code}` — `DisableTwoFactor` verifies a current TOTP code, then clears
+  the enrolment (emitting `TwoFactorDisabled`).
+- `POST /{prefix}/2fa/recovery-codes` — `RegenerateRecoveryCodes` replaces the whole set and returns
+  the new plaintext codes (requires confirmed 2FA).
+
+**Login with 2FA active.** `POST /{prefix}/login` no longer returns a token; it returns
+`{twoFactorRequired: true, challengeToken}`. The `challengeToken` is a **stateless, encrypted,
+short-lived** token (`ChallengeTokenFactory`, TTL `two_factor.challenge_ttl`) — no server-side
+challenge table.
+
+- `POST /{prefix}/2fa/challenge` `{challengeToken, code}` — `VerifyTwoFactorChallenge` decrypts and
+  expiry-checks the challenge token (**401** if invalid/expired), then accepts either a valid **TOTP
+  code** or a **recovery code** (which is consumed, single-use). On success it issues the real Sanctum
+  token: `{token}`. A wrong TOTP and unknown recovery code → **422**.
+
 ## Session — `/me`
 
 `GET /{prefix}/me` (Bearer token)

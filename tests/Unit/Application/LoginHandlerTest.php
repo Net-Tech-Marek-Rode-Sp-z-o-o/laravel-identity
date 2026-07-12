@@ -9,7 +9,9 @@ use NetCode\Identity\Application\Command\Login\LoginHandler;
 use NetCode\Identity\Domain\Exception\InvalidCredentialsException;
 use NetCode\Identity\Domain\User;
 use NetCode\Identity\Domain\ValueObjects\Email;
+use NetCode\Identity\Domain\ValueObjects\TwoFactorSettings;
 use NetCode\Identity\Domain\ValueObjects\UserId;
+use NetCode\Identity\Tests\Support\FakeChallengeTokenFactory;
 use NetCode\Identity\Tests\Support\FakePasswordHasher;
 use NetCode\Identity\Tests\Support\FakeTokenIssuer;
 use NetCode\Identity\Tests\Support\FixedRealmContext;
@@ -26,11 +28,14 @@ final class LoginHandlerTest extends TestCase
             tokens: new FakeTokenIssuer,
             users: $repo,
             hasher: new FakePasswordHasher,
+            challenges: new FakeChallengeTokenFactory,
         );
     }
 
-    private function withUser(string|null $passwordHash = 'hashed:secret123'): InMemoryUserRepository
-    {
+    private function withUser(
+        string|null $passwordHash = 'hashed:secret123',
+        TwoFactorSettings|null $twoFactor = null,
+    ): InMemoryUserRepository {
         $repo = new InMemoryUserRepository;
         $repo->save(User::reconstitute(
             id: UserId::random(),
@@ -38,6 +43,7 @@ final class LoginHandlerTest extends TestCase
             email: new Email('ada@example.test'),
             name: 'Ada',
             passwordHash: $passwordHash,
+            twoFactor: $twoFactor,
             deletedAt: null,
         ));
 
@@ -47,12 +53,34 @@ final class LoginHandlerTest extends TestCase
     #[Test]
     public function it_issues_a_token_for_valid_credentials(): void
     {
-        $token = ($this->handler($this->withUser()))(new Login(
+        $result = ($this->handler($this->withUser()))(new Login(
             email: 'ada@example.test',
             password: 'secret123',
         ));
 
-        $this->assertStringStartsWith('token-', $token);
+        $this->assertFalse($result->requiresTwoFactor());
+        $this->assertNotNull($result->token);
+        $this->assertStringStartsWith('token-', $result->token);
+    }
+
+    #[Test]
+    public function it_returns_a_challenge_when_two_factor_is_active(): void
+    {
+        $twoFactor = new TwoFactorSettings(
+            secret: 'enc:SECRET',
+            recoveryCodes: [],
+            confirmedAt: new \DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+        );
+
+        $result = ($this->handler($this->withUser(twoFactor: $twoFactor)))(new Login(
+            email: 'ada@example.test',
+            password: 'secret123',
+        ));
+
+        $this->assertTrue($result->requiresTwoFactor());
+        $this->assertNull($result->token);
+        $this->assertNotNull($result->challengeToken);
+        $this->assertStringStartsWith('challenge:', $result->challengeToken);
     }
 
     #[Test]

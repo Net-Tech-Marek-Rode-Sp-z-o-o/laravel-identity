@@ -18,11 +18,18 @@ final readonly class LoginController
     public function __invoke(
         LoginData $data,
     ): JsonResponse {
-        $token = $this->bus->dispatch(new Login(
+        $result = $this->bus->dispatch(new Login(
             email: $data->email,
             password: $data->password,
         ));
 
-        return new JsonResponse(['token' => $token]);
+        if ($result->requiresTwoFactor()) {
+            return new JsonResponse([
+                'twoFactorRequired' => true,
+                'challengeToken' => $result->challengeToken,
+            ]);
+        }
+
+        return new JsonResponse(['token' => $result->token]);
     }
 }

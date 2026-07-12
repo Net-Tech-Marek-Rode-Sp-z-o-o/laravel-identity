@@ -45,6 +45,7 @@ final class RequestPasswordResetHandlerTest extends TestCase
             email: new Email('ada@example.test'),
             name: 'Ada',
             passwordHash: 'hash',
+            twoFactor: null,
             deletedAt: null,
         ));
 

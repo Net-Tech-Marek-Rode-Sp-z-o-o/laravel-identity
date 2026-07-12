@@ -10,8 +10,10 @@ use NetCode\Identity\Domain\Exception\UserNotFoundException;
 use NetCode\Identity\Domain\User;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\RealmId;
+use NetCode\Identity\Domain\ValueObjects\TwoFactorSettings;
 use NetCode\Identity\Domain\ValueObjects\UserId;
 use NetCode\Identity\Infrastructure\DataAccess\Mappers\UserMapper;
+use NetCode\Identity\Infrastructure\DataAccess\Models\TwoFactorModel;
 use NetCode\Identity\Infrastructure\DataAccess\Models\UserModel;
 
 final readonly class EloquentUserRepository implements UserRepository
@@ -28,7 +30,7 @@ final readonly class EloquentUserRepository implements UserRepository
 
     public function findByEmail(RealmId|null $realm, Email $email): User|null
     {
-        $query = UserModel::query()->where('email', $email->value());
+        $query = UserModel::query()->with(UserModel::BASE_WITH)->where('email', $email->value());
 
         $query = $realm === null
             ? $query->whereNull('realm_id')
@@ -41,7 +43,7 @@ final readonly class EloquentUserRepository implements UserRepository
 
     public function getById(UserId $id): User
     {
-        $model = UserModel::query()->find($id->value());
+        $model = UserModel::query()->with(UserModel::BASE_WITH)->find($id->value());
 
         return $model === null
             ? throw UserNotFoundException::withId($id)
@@ -54,6 +56,22 @@ final readonly class EloquentUserRepository implements UserRepository
         $this->mapper->hydrate($user, $model);
         $model->save();
 
+        $this->saveTwoFactor($user->id()->value(), $user->twoFactor());
+
         $this->events->publish(...$user->releaseEvents());
+    }
+
+    private function saveTwoFactor(string $userId, TwoFactorSettings|null $settings): void
+    {
+        if ($settings === null) {
+            TwoFactorModel::query()->whereKey($userId)->delete();
+
+            return;
+        }
+
+        $model = TwoFactorModel::query()->findOrNew($userId);
+        $model->user_id = $userId;
+        $this->mapper->hydrateTwoFactor($settings, $model);
+        $model->save();
     }
 }

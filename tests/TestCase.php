@@ -32,6 +32,8 @@ abstract class TestCase extends Orchestra
     {
         $config = $app['config'];
 
+        $config->set('app.key', 'base64:'.base64_encode(str_repeat('a', 32)));
+
         $config->set('database.default', 'pgsql');
         $config->set('database.connections.pgsql', [
             'driver' => 'pgsql',

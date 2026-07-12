@@ -7,7 +7,7 @@ namespace NetCode\Identity\Application\Command\Login;
 use NetCode\Bus\Command\Command;
 use NetCode\Bus\Command\HandledBy;
 
-/** @implements Command<string> */
+/** @implements Command<LoginResult> */
 #[HandledBy(LoginHandler::class)]
 final readonly class Login implements Command
 {

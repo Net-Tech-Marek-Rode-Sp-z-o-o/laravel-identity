@@ -43,6 +43,7 @@ final class ResetPasswordHandlerTest extends TestCase
             email: new Email('ada@example.test'),
             name: 'Ada',
             passwordHash: 'hashed:old-password',
+            twoFactor: null,
             deletedAt: null,
         ));
 

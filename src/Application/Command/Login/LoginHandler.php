@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NetCode\Identity\Application\Command\Login;
 
 use NetCode\Bus\Command\CommandHandler;
+use NetCode\Identity\Application\Port\ChallengeTokenFactory;
 use NetCode\Identity\Application\Port\PasswordHasher;
 use NetCode\Identity\Application\Port\RealmContext;
 use NetCode\Identity\Application\Port\TokenIssuer;
@@ -19,11 +20,12 @@ final readonly class LoginHandler implements CommandHandler
         private TokenIssuer $tokens,
         private UserRepository $users,
         private PasswordHasher $hasher,
+        private ChallengeTokenFactory $challenges,
     ) {}
 
     public function __invoke(
         Login $command,
-    ): string {
+    ): LoginResult {
         $user = $this->users->findByEmail($this->realm->current(), new Email($command->email));
 
         if ($user === null
@@ -32,6 +34,10 @@ final readonly class LoginHandler implements CommandHandler
             throw InvalidCredentialsException::create();
         }
 
-        return $this->tokens->issue($user->id());
+        if ($user->hasActiveTwoFactor()) {
+            return LoginResult::twoFactorRequired($this->challenges->issue($user->id()));
+        }
+
+        return LoginResult::authenticated($this->tokens->issue($user->id()));
     }
 }
