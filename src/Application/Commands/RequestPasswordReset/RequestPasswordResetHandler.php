@@ -31,11 +31,11 @@ final readonly class RequestPasswordResetHandler implements CommandHandler
 
     public function __invoke(
         RequestPasswordReset $command,
-    ): null {
+    ): void {
         $user = $this->users->findByEmail($this->realm->current(), new Email($command->email));
 
         if ($user === null) {
-            return null;
+            return;
         }
 
         $token = $this->generator->generate();
@@ -49,7 +49,5 @@ final readonly class RequestPasswordResetHandler implements CommandHandler
 
         $this->tokens->save($reset);
         $this->notifier->notify($user->email(), $token, $reset->expiresAt());
-
-        return null;
     }
 }

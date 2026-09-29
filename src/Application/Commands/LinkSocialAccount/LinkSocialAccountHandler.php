@@ -21,13 +21,13 @@ final readonly class LinkSocialAccountHandler implements CommandHandler
 
     public function __invoke(
         LinkSocialAccount $command,
-    ): null {
+    ): void {
         $profile = $this->social->fetch($command->provider, $command->accessToken);
 
         $linked = $this->links->findByProvider($profile->provider, $profile->providerId);
         if ($linked !== null) {
             if ($linked->userId()->equals($command->userId)) {
-                return null;
+                return;
             }
 
             throw SocialAccountAlreadyLinkedException::create();
@@ -40,7 +40,5 @@ final readonly class LinkSocialAccountHandler implements CommandHandler
             providerId: $profile->providerId,
             now: $this->clock->now(),
         ));
-
-        return null;
     }
 }

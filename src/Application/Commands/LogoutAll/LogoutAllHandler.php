@@ -15,9 +15,7 @@ final readonly class LogoutAllHandler implements CommandHandler
 
     public function __invoke(
         LogoutAll $command,
-    ): null {
+    ): void {
         $this->tokens->revokeAll();
-
-        return null;
     }
 }

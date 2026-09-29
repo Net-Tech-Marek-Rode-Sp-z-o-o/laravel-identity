@@ -15,9 +15,7 @@ final readonly class LogoutHandler implements CommandHandler
 
     public function __invoke(
         Logout $command,
-    ): null {
+    ): void {
         $this->tokens->revokeCurrent();
-
-        return null;
     }
 }

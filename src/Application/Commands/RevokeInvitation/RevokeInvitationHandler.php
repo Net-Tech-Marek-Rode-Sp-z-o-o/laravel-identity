@@ -19,7 +19,7 @@ final readonly class RevokeInvitationHandler implements CommandHandler
 
     public function __invoke(
         RevokeInvitation $command,
-    ): null {
+    ): void {
         $invitation = $this->invitations->findById(InvitationId::fromString($command->invitationId));
 
         if ($invitation === null) {
@@ -28,7 +28,5 @@ final readonly class RevokeInvitationHandler implements CommandHandler
 
         $invitation->revoke($this->clock->now());
         $this->invitations->save($invitation);
-
-        return null;
     }
 }

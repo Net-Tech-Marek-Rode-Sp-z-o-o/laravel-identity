@@ -23,7 +23,7 @@ final readonly class ConfirmTwoFactorHandler implements CommandHandler
 
     public function __invoke(
         ConfirmTwoFactor $command,
-    ): null {
+    ): void {
         $user = $this->users->getById($command->userId);
 
         $settings = $user->twoFactor();
@@ -37,7 +37,5 @@ final readonly class ConfirmTwoFactorHandler implements CommandHandler
 
         $user->confirmTwoFactor($this->clock->now());
         $this->users->save($user);
-
-        return null;
     }
 }

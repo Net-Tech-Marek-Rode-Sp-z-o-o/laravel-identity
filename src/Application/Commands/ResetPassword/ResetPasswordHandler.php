@@ -24,7 +24,7 @@ final readonly class ResetPasswordHandler implements CommandHandler
 
     public function __invoke(
         ResetPassword $command,
-    ): null {
+    ): void {
         $token = $this->tokens->findByHash($this->tokenHasher->hash($command->token));
 
         if ($token === null) {
@@ -38,7 +38,5 @@ final readonly class ResetPasswordHandler implements CommandHandler
 
         $this->users->save($user);
         $this->tokens->save($token);
-
-        return null;
     }
 }
