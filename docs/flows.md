@@ -98,6 +98,20 @@ concern, surfaced by composing its `Authorizer` into this response.
 - `POST /{prefix}/logout-all` — revokes **every** token for the user → **204**. All existing
   sessions are invalidated.
 
+## Account deletion
+
+`DELETE /{prefix}/me` `{password?}` (Bearer token)
+
+1. The user confirms with the password. A user with a password must send it; a wrong or missing
+   password → **422** (`PasswordConfirmationFailedException`). A passwordless (social) user may omit it.
+2. `DeleteAccountHandler` runs inside the command bus transaction:
+   - soft-deletes the `User` (sets `deleted_at`; the repository publishes `UserDeleted`),
+   - revokes **every** token of the user,
+   - runs the `AccountDeletionHook` (same transaction) with a typed
+     `DeletedUser { id, name, email, realmId }` — the seam for "leave the tenant, clean up host data".
+3. Responds **204**. The old tokens no longer authenticate and login answers **401**. The unique
+   `(realm, email)` index ignores deleted rows, so the same e-mail can register again.
+
 ## Invitations
 
 An authenticated user invites an email; the invitee accepts with a token, which creates their account.

@@ -52,6 +52,7 @@ no body.
 | POST | `/{prefix}/logout` | sanctum | `204` (revokes current token) |
 | POST | `/{prefix}/logout-all` | sanctum | `204` (revokes all tokens) |
 | GET | `/{prefix}/me` | sanctum | `{data:{id,name,email,realm_id,email_verified}}` |
+| DELETE | `/{prefix}/me` | sanctum | `{password?}` → `204` (soft-deletes the user, revokes all tokens; `password` required if the user has one, `422` if wrong or missing) |
 | POST | `/{prefix}/email/resend` | sanctum | `204` (sends a new verification token; does nothing if already verified) |
 | POST | `/{prefix}/2fa/enable` | sanctum | `{data:{secret,otpauth_uri,recovery_codes}}` (starts pending enrolment) |
 | POST | `/{prefix}/2fa/confirm` | sanctum | `{code}` → `204` (activates 2FA; `422` on a bad code) |
@@ -63,6 +64,7 @@ no body.
 
 Errors are mapped to JSON: invalid credentials → `401`, invalid/expired 2FA challenge token → `401`,
 duplicate email → `422`, invalid reset token → `422`, invalid verification token → `422`, invalid/expired/revoked invitation → `422`,
+failed password confirmation on account deletion → `422`,
 invalid 2FA code → `422`, 2FA not enrolled → `422`, unverified social email on an existing user →
 `422`, social account already linked → `409`, user not found → `404`.
 
@@ -100,6 +102,10 @@ Route::middleware(['auth:sanctum', 'identity.verified'])->group(...);
   to `NoRegistrationPayload`); the hook (default no-op) receives the new `RegisteredUser` + that typed
   payload — e.g. provision an organization from extra register fields. Complementary to the
   `UserRegistered` event (hook = finish registration atomically; event = broadcast the fact).
+- `AccountDeletionHook` — runs inside the account-deletion transaction, after the user is soft-deleted
+  and its tokens are revoked (default `NullAccountDeletionHook`, a no-op). It receives a typed
+  `DeletedUser { id, name, email, realmId }` — e.g. leave the host tenant and clean up host data
+  atomically. Complementary to the `UserDeleted` event.
 
 **Internal** — swappable adapters (defaults wired): `TokenIssuer`/`TokenRevoker` → Sanctum,
 `PasswordHasher` → Laravel Hash, `UserRepository` → Eloquent, `Clock` → `SystemClock`,

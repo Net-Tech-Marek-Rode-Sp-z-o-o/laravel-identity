@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Route;
 use NetCode\Identity\Presentation\Http\Controllers\AcceptInvitationController;
 use NetCode\Identity\Presentation\Http\Controllers\ConfirmTwoFactorController;
+use NetCode\Identity\Presentation\Http\Controllers\DeleteAccountController;
 use NetCode\Identity\Presentation\Http\Controllers\DisableTwoFactorController;
 use NetCode\Identity\Presentation\Http\Controllers\EnableTwoFactorController;
 use NetCode\Identity\Presentation\Http\Controllers\InviteUserController;
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('logout', LogoutController::class);
     Route::post('logout-all', LogoutAllController::class);
     Route::get('me', MeController::class);
+    Route::delete('me', DeleteAccountController::class);
     Route::post('email/resend', ResendEmailVerificationController::class);
 
     Route::post('2fa/enable', EnableTwoFactorController::class);

@@ -13,6 +13,7 @@ use NetCode\Identity\Application\Commands\EnableTwoFactor\EnableTwoFactorHandler
 use NetCode\Identity\Application\Commands\InviteUser\InviteUserHandler;
 use NetCode\Identity\Application\Commands\RequestPasswordReset\RequestPasswordResetHandler;
 use NetCode\Identity\Application\EmailVerificationIssuer;
+use NetCode\Identity\Application\Ports\AccountDeletionHook;
 use NetCode\Identity\Application\Ports\ChallengeTokenFactory;
 use NetCode\Identity\Application\Ports\CurrentUser;
 use NetCode\Identity\Application\Ports\EmailVerificationNotifier;
@@ -43,6 +44,7 @@ use NetCode\Identity\Domain\Exceptions\InvalidInvitationException;
 use NetCode\Identity\Domain\Exceptions\InvalidResetTokenException;
 use NetCode\Identity\Domain\Exceptions\InvalidTwoFactorCodeException;
 use NetCode\Identity\Domain\Exceptions\InvalidVerificationTokenException;
+use NetCode\Identity\Domain\Exceptions\PasswordConfirmationFailedException;
 use NetCode\Identity\Domain\Exceptions\SocialAccountAlreadyLinkedException;
 use NetCode\Identity\Domain\Exceptions\SocialEmailNotVerifiedException;
 use NetCode\Identity\Domain\Exceptions\TwoFactorNotEnrolledException;
@@ -54,6 +56,7 @@ use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentInvitationRe
 use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentLinkedAccountRepository;
 use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentPasswordResetTokenRepository;
 use NetCode\Identity\Infrastructure\DataAccess\Repositories\EloquentUserRepository;
+use NetCode\Identity\Infrastructure\Deletion\NullAccountDeletionHook;
 use NetCode\Identity\Infrastructure\Invitation\NullInvitationAcceptanceHook;
 use NetCode\Identity\Infrastructure\Mail\MailEmailVerificationNotifier;
 use NetCode\Identity\Infrastructure\Mail\MailInvitationNotifier;
@@ -103,6 +106,7 @@ final class IdentityServiceProvider extends ServiceProvider
         $this->app->bind(SocialIdentityProvider::class, SocialiteIdentityProvider::class);
         $this->app->bind(PostRegistrationHook::class, NullPostRegistrationHook::class);
         $this->app->bind(RegistrationPayloadFactory::class, DefaultRegistrationPayloadFactory::class);
+        $this->app->bind(AccountDeletionHook::class, NullAccountDeletionHook::class);
         $this->app->scoped(CurrentUser::class, SanctumCurrentUser::class);
 
         $this->app->bind(Totp::class, fn (): Totp => new PragmaRxTotp(new Google2FA));
@@ -168,6 +172,7 @@ final class IdentityServiceProvider extends ServiceProvider
         $handler->renderable(fn (EmailAlreadyTakenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
         $handler->renderable(fn (InvalidResetTokenException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
         $handler->renderable(fn (InvalidVerificationTokenException $e): JsonResponse => new JsonResponse(data: ['message' => $e->getMessage()], status: Response::HTTP_UNPROCESSABLE_ENTITY));
+        $handler->renderable(fn (PasswordConfirmationFailedException $e): JsonResponse => new JsonResponse(data: ['message' => $e->getMessage()], status: Response::HTTP_UNPROCESSABLE_ENTITY));
         $handler->renderable(fn (InvalidInvitationException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
         $handler->renderable(fn (InvalidTwoFactorCodeException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
         $handler->renderable(fn (TwoFactorNotEnrolledException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY));
