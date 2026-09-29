@@ -46,6 +46,11 @@ final readonly class SocialLoginHandler implements CommandHandler
                 throw SocialEmailNotVerifiedException::create();
             }
 
+            if (! $existing->isEmailVerified()) {
+                $existing->verifyEmail(now: $this->clock->now());
+                $this->users->save(user: $existing);
+            }
+
             $this->link($existing->id(), $profile);
 
             return $this->tokens->issue($existing->id());
@@ -58,6 +63,11 @@ final readonly class SocialLoginHandler implements CommandHandler
             name: $profile->name ?? $profile->email->value(),
             now: $this->clock->now(),
         );
+
+        if ($profile->emailVerified) {
+            $user->verifyEmail(now: $this->clock->now());
+        }
+
         $this->users->save($user);
         $this->link($user->id(), $profile);
 

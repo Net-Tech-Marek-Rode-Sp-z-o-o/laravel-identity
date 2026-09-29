@@ -40,6 +40,7 @@ final readonly class SanctumCurrentUser implements CurrentUser
             name: $user->name,
             email: $user->email,
             realmId: $user->realm_id?->value(),
+            emailVerified: $user->email_verified_at !== null,
         );
     }
 

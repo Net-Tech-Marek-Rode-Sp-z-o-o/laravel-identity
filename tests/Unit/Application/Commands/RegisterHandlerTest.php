@@ -11,11 +11,13 @@ use NetCode\Identity\Domain\Exceptions\EmailAlreadyTakenException;
 use NetCode\Identity\Domain\ValueObjects\RealmId;
 use NetCode\Identity\Domain\ValueObjects\UserId;
 use NetCode\Identity\Infrastructure\Registration\NoRegistrationPayload;
+use NetCode\Identity\Tests\Support\EmailVerificationIssuerFactory;
 use NetCode\Identity\Tests\Support\FakePasswordHasher;
 use NetCode\Identity\Tests\Support\FixedClock;
 use NetCode\Identity\Tests\Support\FixedRealmContext;
 use NetCode\Identity\Tests\Support\InMemoryUserRepository;
 use NetCode\Identity\Tests\Support\RecordingPostRegistrationHook;
+use NetCode\Identity\Tests\Support\SpyEmailVerificationNotifier;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,9 +25,12 @@ final class RegisterHandlerTest extends TestCase
 {
     private RecordingPostRegistrationHook $hook;
 
+    private SpyEmailVerificationNotifier $notifier;
+
     protected function setUp(): void
     {
         $this->hook = new RecordingPostRegistrationHook;
+        $this->notifier = new SpyEmailVerificationNotifier;
     }
 
     private function handler(InMemoryUserRepository $repo, FixedRealmContext $realm = new FixedRealmContext): RegisterHandler
@@ -36,6 +41,7 @@ final class RegisterHandlerTest extends TestCase
             users: $repo,
             hasher: new FakePasswordHasher,
             hook: $this->hook,
+            verification: EmailVerificationIssuerFactory::make(notifier: $this->notifier),
         );
     }
 
@@ -91,5 +97,17 @@ final class RegisterHandlerTest extends TestCase
         $this->expectException(EmailAlreadyTakenException::class);
 
         $handler($this->command(name: 'Ada II'));
+    }
+
+    #[Test]
+    public function it_sends_an_email_verification_token(): void
+    {
+        $repo = new InMemoryUserRepository;
+
+        $id = ($this->handler($repo))($this->command());
+
+        $this->assertSame('ada@example.test', $this->notifier->email?->value());
+        $this->assertSame('the-token', $this->notifier->token);
+        $this->assertFalse($repo->getById(UserId::fromString($id))->isEmailVerified());
     }
 }

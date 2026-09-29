@@ -12,6 +12,8 @@ return [
 
     'password_reset_ttl' => 60,
 
+    'email_verification_ttl' => 1440,
+
     'invitation_ttl' => 4320,
 
     'two_factor' => [

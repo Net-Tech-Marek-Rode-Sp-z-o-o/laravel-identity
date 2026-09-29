@@ -28,6 +28,7 @@ Configure the Sanctum guard to use this package's model (in the host `config/aut
 | `register_enabled` | `true` | whether `POST /register` is exposed |
 | `token_name` | `api` | Sanctum token name issued on login |
 | `password_reset_ttl` | `60` | reset-token lifetime in minutes |
+| `email_verification_ttl` | `1440` | e-mail verification token lifetime in minutes (default 24 hours) |
 | `invitation_ttl` | `4320` | invitation lifetime in minutes (default 3 days) |
 | `two_factor.issuer` | `null` | TOTP issuer label shown in authenticator apps (falls back to `app.name`) |
 | `two_factor.challenge_ttl` | `5` | 2FA challenge-token lifetime in minutes |
@@ -45,11 +46,13 @@ no body.
 | POST | `/{prefix}/2fa/challenge` | — | `{challengeToken,code}` → `{data:{token}}` (`code` = a TOTP or a recovery code) |
 | POST | `/{prefix}/password/forgot` | — | `{email}` → `204` (always; issues a token if the email exists) |
 | POST | `/{prefix}/password/reset` | — | `{token,password}` → `204` (`422` if the token is invalid/expired/used) |
+| POST | `/{prefix}/email/verify` | — | `{token}` → `204` (marks the e-mail verified; `422` if the token is invalid/expired/used) |
 | POST | `/{prefix}/invitations/accept` | — | `{token,name,password}` → `201 {data:{id}}` (creates the user; `422` if invalid/expired/revoked) |
 | POST | `/{prefix}/{provider}/login` | — | `{accessToken}` → `{data:{token}}` (social login/register; `provider` = `google`\|`facebook`, else `404`) |
 | POST | `/{prefix}/logout` | sanctum | `204` (revokes current token) |
 | POST | `/{prefix}/logout-all` | sanctum | `204` (revokes all tokens) |
-| GET | `/{prefix}/me` | sanctum | `{data:{id,name,email,realm_id}}` |
+| GET | `/{prefix}/me` | sanctum | `{data:{id,name,email,realm_id,email_verified}}` |
+| POST | `/{prefix}/email/resend` | sanctum | `204` (sends a new verification token; does nothing if already verified) |
 | POST | `/{prefix}/2fa/enable` | sanctum | `{data:{secret,otpauth_uri,recovery_codes}}` (starts pending enrolment) |
 | POST | `/{prefix}/2fa/confirm` | sanctum | `{code}` → `204` (activates 2FA; `422` on a bad code) |
 | POST | `/{prefix}/2fa/disable` | sanctum | `{code}` → `204` (`422` on a bad code) |
@@ -59,9 +62,18 @@ no body.
 | POST | `/{prefix}/{provider}/link` | sanctum | `{accessToken}` → `204` (links a social account to the current user; `409` if already linked elsewhere) |
 
 Errors are mapped to JSON: invalid credentials → `401`, invalid/expired 2FA challenge token → `401`,
-duplicate email → `422`, invalid reset token → `422`, invalid/expired/revoked invitation → `422`,
+duplicate email → `422`, invalid reset token → `422`, invalid verification token → `422`, invalid/expired/revoked invitation → `422`,
 invalid 2FA code → `422`, 2FA not enrolled → `422`, unverified social email on an existing user →
 `422`, social account already linked → `409`, user not found → `404`.
+
+## Middleware
+
+`identity.verified` returns **403** for an authenticated user whose e-mail is not verified. The
+package does not apply it; add it to the host routes that need a verified user:
+
+```php
+Route::middleware(['auth:sanctum', 'identity.verified'])->group(...);
+```
 
 ## Ports (hexagonal)
 
@@ -75,6 +87,9 @@ invalid 2FA code → `422`, 2FA not enrolled → `422`, unverified social email 
 - `PasswordResetNotifier` — how the reset token reaches the user. The default
   `MailPasswordResetNotifier` sends a plain email with the token; override it to send a branded mail
   containing your frontend reset URL.
+- `EmailVerificationNotifier` — how the e-mail verification token reaches the user. The default
+  `MailEmailVerificationNotifier` sends a plain email with the token; override it to send a branded
+  mail containing your frontend verification URL.
 - `InvitationNotifier` — how the invitation token reaches the invitee (default `MailInvitationNotifier`,
   a plain email); override for a branded mail with your frontend accept URL.
 - `InvitationAcceptanceHook` — runs after an invitation is accepted (default no-op). Bind your own to
@@ -96,6 +111,6 @@ the SPA obtains the provider access token and posts it to `/{provider}/login|lin
 
 ## Events
 
-`UserRegistered`, `UserDeleted`, `PasswordChanged`, `TwoFactorEnabled`/`TwoFactorDisabled` and
+`UserRegistered`, `EmailVerified`, `UserDeleted`, `PasswordChanged`, `TwoFactorEnabled`/`TwoFactorDisabled` and
 `InvitationAccepted` are published via the domain event publisher — subscribe for decoupled
 follow-ups (welcome mail, provisioning, …).

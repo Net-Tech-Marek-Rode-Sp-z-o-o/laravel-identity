@@ -103,6 +103,7 @@ final class SocialLoginHandlerTest extends TestCase
 
         $this->assertSame('token-'.$id->value(), $token);
         $this->assertNotNull($this->links->findByProvider(SocialProvider::Google, 'g-new'));
+        $this->assertTrue($this->users->getById($id)->isEmailVerified());
     }
 
     #[Test]
@@ -126,6 +127,7 @@ final class SocialLoginHandlerTest extends TestCase
         $user = $this->users->findByEmail(null, new Email('new@example.test'));
         $this->assertNotNull($user);
         $this->assertNull($user->passwordHash());
+        $this->assertTrue($user->isEmailVerified());
         $this->assertNotNull($this->links->findByProvider(SocialProvider::Google, 'g-x'));
     }
 }

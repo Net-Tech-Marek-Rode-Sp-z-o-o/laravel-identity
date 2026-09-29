@@ -11,5 +11,6 @@ final readonly class AuthenticatedUser
         public string $name,
         public string $email,
         public string|null $realmId,
+        public bool $emailVerified = false,
     ) {}
 }

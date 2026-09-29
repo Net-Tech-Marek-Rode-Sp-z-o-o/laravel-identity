@@ -50,6 +50,7 @@ final readonly class AcceptInvitationHandler implements CommandHandler
             passwordHash: $this->hasher->hash($command->password),
             now: $this->clock->now(),
         );
+        $user->verifyEmail(now: $this->clock->now());
 
         $this->users->save($user);
         $this->invitations->save($invitation);

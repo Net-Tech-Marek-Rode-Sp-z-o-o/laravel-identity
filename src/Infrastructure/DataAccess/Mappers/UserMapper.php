@@ -22,6 +22,7 @@ final class UserMapper
             passwordHash: $model->password_hash,
             twoFactor: $this->toTwoFactor($model->twoFactor),
             deletedAt: $model->deleted_at,
+            emailVerifiedAt: $model->email_verified_at,
         );
     }
 
@@ -33,6 +34,7 @@ final class UserMapper
         $model->name = $user->name();
         $model->password_hash = $user->passwordHash();
         $model->deleted_at = $user->deletedAt();
+        $model->email_verified_at = $user->emailVerifiedAt();
     }
 
     public function hydrateTwoFactor(TwoFactorSettings $settings, TwoFactorModel $model): void

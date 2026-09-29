@@ -16,16 +16,19 @@ use NetCode\Identity\Presentation\Http\Controllers\MeController;
 use NetCode\Identity\Presentation\Http\Controllers\RegenerateRecoveryCodesController;
 use NetCode\Identity\Presentation\Http\Controllers\RegisterController;
 use NetCode\Identity\Presentation\Http\Controllers\RequestPasswordResetController;
+use NetCode\Identity\Presentation\Http\Controllers\ResendEmailVerificationController;
 use NetCode\Identity\Presentation\Http\Controllers\ResetPasswordController;
 use NetCode\Identity\Presentation\Http\Controllers\RevokeInvitationController;
 use NetCode\Identity\Presentation\Http\Controllers\SocialLoginController;
 use NetCode\Identity\Presentation\Http\Controllers\TwoFactorChallengeController;
+use NetCode\Identity\Presentation\Http\Controllers\VerifyEmailController;
 
 Route::post('login', LoginController::class);
 Route::post('2fa/challenge', TwoFactorChallengeController::class);
 Route::post('password/forgot', RequestPasswordResetController::class);
 Route::post('password/reset', ResetPasswordController::class);
 Route::post('invitations/accept', AcceptInvitationController::class);
+Route::post('email/verify', VerifyEmailController::class);
 Route::post('{provider}/login', SocialLoginController::class);
 
 if (config('identity.register_enabled') === true) {
@@ -36,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('logout', LogoutController::class);
     Route::post('logout-all', LogoutAllController::class);
     Route::get('me', MeController::class);
+    Route::post('email/resend', ResendEmailVerificationController::class);
 
     Route::post('2fa/enable', EnableTwoFactorController::class);
     Route::post('2fa/confirm', ConfirmTwoFactorController::class);

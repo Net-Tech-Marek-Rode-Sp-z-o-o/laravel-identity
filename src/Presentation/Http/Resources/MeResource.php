@@ -24,6 +24,7 @@ final class MeResource extends JsonResource
             'name' => $this->user->name,
             'email' => $this->user->email,
             'realm_id' => $this->user->realmId,
+            'email_verified' => $this->user->emailVerified,
         ];
     }
 }

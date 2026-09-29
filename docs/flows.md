@@ -16,8 +16,9 @@ End-to-end behaviour of the package. Each flow is covered by a feature test in
    - the repository publishes `UserRegistered`,
    - the `PostRegistrationHook` runs (same transaction) with the new `RegisteredUser` and a
      host-typed `RegistrationPayload` built from the request by `RegistrationPayloadFactory` (default
-     `NoRegistrationPayload`) — the seam for "registration also provisions X".
-3. Responds `201 { data: { id } }`.
+     `NoRegistrationPayload`) — the seam for "registration also provisions X",
+   - an e-mail verification token is issued (see below).
+3. Responds `201 { data: { id } }`. The new user is not verified yet.
 
 ## Login
 
@@ -41,6 +42,20 @@ End-to-end behaviour of the package. Each flow is covered by a feature test in
 
 The default `MailPasswordResetNotifier` emails the raw token; a host binds its own notifier to send a
 branded email carrying its frontend reset URL.
+
+## E-mail verification
+
+- On registration, `EmailVerificationIssuer` generates a token, stores its **SHA-256 hash** with a TTL
+  (`email_verification_ttl`) and hands the **plaintext** token to `EmailVerificationNotifier`.
+- `POST /{prefix}/email/verify` `{token}` — `VerifyEmailHandler` looks the token up by its hash,
+  `redeem()`s it (**422** if expired or used), marks the user verified (emitting `EmailVerified`).
+  Responds **204**. No authentication: the link works on any device.
+- `POST /{prefix}/email/resend` (Bearer token) — issues a new token for an unverified user; does
+  nothing for a verified one. Responds **204**.
+- Accepting an invitation verifies the e-mail, because the token arrived by e-mail. A social login
+  verifies it when the provider reports the e-mail as verified.
+- `/me` returns `email_verified`. The `identity.verified` middleware answers **403** for an
+  unverified user; the host decides which routes use it.
 
 ## Two-factor authentication (TOTP)
 
@@ -73,7 +88,7 @@ challenge table.
 `GET /{prefix}/me` (Bearer token)
 
 Reads the authenticated subject through the `CurrentUser` port and returns
-`{ data: { id, name, email, realm_id } }`. Roles/permissions are **not** here — that is the access package's
+`{ data: { id, name, email, realm_id, email_verified } }`. Roles/permissions are **not** here — that is the access package's
 concern, surfaced by composing its `Authorizer` into this response.
 
 ## Logout

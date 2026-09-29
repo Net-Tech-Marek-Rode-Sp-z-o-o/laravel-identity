@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NetCode\Identity\Application\Commands\Register;
 
 use NetCode\Bus\Command\CommandHandler;
+use NetCode\Identity\Application\EmailVerificationIssuer;
 use NetCode\Identity\Application\Ports\PasswordHasher;
 use NetCode\Identity\Application\Ports\PostRegistrationHook;
 use NetCode\Identity\Application\Ports\RealmContext;
@@ -25,6 +26,7 @@ final readonly class RegisterHandler implements CommandHandler
         private UserRepository $users,
         private PasswordHasher $hasher,
         private PostRegistrationHook $hook,
+        private EmailVerificationIssuer $verification,
     ) {}
 
     public function __invoke(
@@ -58,6 +60,8 @@ final readonly class RegisterHandler implements CommandHandler
             user: $registeredUser,
             payload: $command->payload,
         );
+
+        $this->verification->issueFor(user: $user);
 
         return $user->id()->value();
     }

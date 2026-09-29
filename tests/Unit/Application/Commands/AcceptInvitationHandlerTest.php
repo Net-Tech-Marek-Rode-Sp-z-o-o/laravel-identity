@@ -75,6 +75,7 @@ final class AcceptInvitationHandlerTest extends TestCase
         $user = $this->users->getById(UserId::fromString($userId));
         $this->assertSame('ada@example.test', $user->email()->value());
         $this->assertSame('hashed:new-password', $user->passwordHash());
+        $this->assertTrue($user->isEmailVerified());
         $this->assertNotNull($this->invitations->findByHash(hash('sha256', 'the-token'))?->acceptedAt());
         $this->assertSame(['role' => 'admin'], $this->hook->accepted?->metadata);
         $this->assertSame($userId, $this->hook->accepted?->userId);

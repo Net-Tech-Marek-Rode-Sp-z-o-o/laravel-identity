@@ -6,6 +6,7 @@ namespace NetCode\Identity\Domain;
 
 use DateTimeImmutable;
 use NetCode\Domain\AggregateRoot;
+use NetCode\Identity\Domain\Events\EmailVerified;
 use NetCode\Identity\Domain\Events\PasswordChanged;
 use NetCode\Identity\Domain\Events\TwoFactorDisabled;
 use NetCode\Identity\Domain\Events\TwoFactorEnabled;
@@ -27,6 +28,7 @@ final class User extends AggregateRoot
         private string|null $passwordHash,
         private TwoFactorSettings|null $twoFactor,
         private DateTimeImmutable|null $deletedAt,
+        private DateTimeImmutable|null $emailVerifiedAt,
     ) {}
 
     public static function register(
@@ -45,6 +47,7 @@ final class User extends AggregateRoot
             passwordHash: $passwordHash,
             twoFactor: null,
             deletedAt: null,
+            emailVerifiedAt: null,
         );
 
         $user->recordThat(new UserRegistered(
@@ -70,6 +73,7 @@ final class User extends AggregateRoot
             passwordHash: null,
             twoFactor: null,
             deletedAt: null,
+            emailVerifiedAt: null,
         );
 
         $user->recordThat(new UserRegistered(
@@ -88,6 +92,7 @@ final class User extends AggregateRoot
         string|null $passwordHash,
         TwoFactorSettings|null $twoFactor,
         DateTimeImmutable|null $deletedAt,
+        DateTimeImmutable|null $emailVerifiedAt = null,
     ): self {
         return new self(
             id: $id,
@@ -97,7 +102,22 @@ final class User extends AggregateRoot
             passwordHash: $passwordHash,
             twoFactor: $twoFactor,
             deletedAt: $deletedAt,
+            emailVerifiedAt: $emailVerifiedAt,
         );
+    }
+
+    public function verifyEmail(DateTimeImmutable $now): void
+    {
+        if ($this->emailVerifiedAt !== null) {
+            return;
+        }
+
+        $this->emailVerifiedAt = $now;
+
+        $this->recordThat(new EmailVerified(
+            userId: $this->id,
+            occurredOn: $now,
+        ));
     }
 
     public function changePassword(
@@ -225,6 +245,16 @@ final class User extends AggregateRoot
     public function deletedAt(): DateTimeImmutable|null
     {
         return $this->deletedAt;
+    }
+
+    public function emailVerifiedAt(): DateTimeImmutable|null
+    {
+        return $this->emailVerifiedAt;
+    }
+
+    public function isEmailVerified(): bool
+    {
+        return $this->emailVerifiedAt !== null;
     }
 
     public function isDeleted(): bool
