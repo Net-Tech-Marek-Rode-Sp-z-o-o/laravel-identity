@@ -14,10 +14,10 @@
         "illuminate/routing": "^13.0",
         "illuminate/support": "^13.0",
         "laravel/sanctum": "^4.3",
+        "laravel/socialite": "^5.23",
         "net-code/laravel-bus": "^0.1.0",
         "net-code/laravel-domain": "^0.1.0",
-        "net-code/laravel-kit": "^0.3.0",
-        "laravel/socialite": "^5.23",
+        "net-code/laravel-kit": "^0.3.0 || ^0.4.0",
         "pragmarx/google2fa": "^8.0",
         "spatie/laravel-data": "^4.23"
     },
