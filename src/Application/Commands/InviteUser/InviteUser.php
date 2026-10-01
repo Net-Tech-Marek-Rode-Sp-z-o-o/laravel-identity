@@ -11,9 +11,8 @@ use NetCode\Bus\Command\HandledBy;
 #[HandledBy(InviteUserHandler::class)]
 final readonly class InviteUser implements Command
 {
-    /** @param array<string, mixed> $metadata */
     public function __construct(
         public string $email,
-        public array $metadata = [],
+        public string $invitedBy,
     ) {}
 }

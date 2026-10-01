@@ -11,6 +11,7 @@ use NetCode\Identity\Domain\Exceptions\InvalidInvitationException;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\InvitationId;
 use NetCode\Identity\Domain\ValueObjects\RealmId;
+use NetCode\Identity\Domain\ValueObjects\UserId;
 
 final class Invitation extends AggregateRoot
 {
@@ -19,6 +20,7 @@ final class Invitation extends AggregateRoot
         private readonly InvitationId $id,
         private readonly RealmId|null $realmId,
         private readonly Email $email,
+        private readonly UserId|null $invitedBy,
         private readonly string $tokenHash,
         private readonly array $metadata,
         private readonly DateTimeImmutable $expiresAt,
@@ -31,6 +33,7 @@ final class Invitation extends AggregateRoot
         InvitationId $id,
         RealmId|null $realmId,
         Email $email,
+        UserId|null $invitedBy,
         string $tokenHash,
         array $metadata,
         DateTimeImmutable $expiresAt,
@@ -39,6 +42,7 @@ final class Invitation extends AggregateRoot
             id: $id,
             realmId: $realmId,
             email: $email,
+            invitedBy: $invitedBy,
             tokenHash: $tokenHash,
             metadata: $metadata,
             expiresAt: $expiresAt,
@@ -52,6 +56,7 @@ final class Invitation extends AggregateRoot
         InvitationId $id,
         RealmId|null $realmId,
         Email $email,
+        UserId|null $invitedBy,
         string $tokenHash,
         array $metadata,
         DateTimeImmutable $expiresAt,
@@ -62,6 +67,7 @@ final class Invitation extends AggregateRoot
             id: $id,
             realmId: $realmId,
             email: $email,
+            invitedBy: $invitedBy,
             tokenHash: $tokenHash,
             metadata: $metadata,
             expiresAt: $expiresAt,
@@ -73,6 +79,10 @@ final class Invitation extends AggregateRoot
     /** @throws InvalidInvitationException */
     public function accept(DateTimeImmutable $now): void
     {
+        if ($this->invitedBy === null) {
+            throw InvalidInvitationException::withoutInviter();
+        }
+
         if ($this->revokedAt !== null) {
             throw InvalidInvitationException::revoked();
         }
@@ -116,6 +126,11 @@ final class Invitation extends AggregateRoot
     public function email(): Email
     {
         return $this->email;
+    }
+
+    public function invitedBy(): UserId|null
+    {
+        return $this->invitedBy;
     }
 
     public function tokenHash(): string

@@ -8,6 +8,11 @@ use NetCode\Domain\Exception\DomainException;
 
 final class InvalidInvitationException extends DomainException
 {
+    public static function withoutInviter(): self
+    {
+        return new self('The invitation has no inviter and cannot be accepted.');
+    }
+
     public static function notFound(): self
     {
         return new self('The invitation is invalid.');

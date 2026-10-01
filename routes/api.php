@@ -49,7 +49,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('2fa/recovery-codes', RegenerateRecoveryCodesController::class);
 
     Route::post('invitations', InviteUserController::class);
-    Route::delete('invitations/{invitationId}', RevokeInvitationController::class);
+    Route::delete('invitations/{invitationId}', RevokeInvitationController::class)->whereUuid('invitationId');
 
     Route::post('{provider}/link', LinkSocialAccountController::class);
 });

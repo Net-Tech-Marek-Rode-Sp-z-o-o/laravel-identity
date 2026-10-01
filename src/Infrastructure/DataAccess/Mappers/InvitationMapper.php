@@ -16,6 +16,7 @@ final class InvitationMapper
             id: $model->id,
             realmId: $model->realm_id,
             email: new Email($model->email),
+            invitedBy: $model->invited_by,
             tokenHash: $model->token_hash,
             metadata: $model->metadata,
             expiresAt: $model->expires_at,
@@ -29,6 +30,7 @@ final class InvitationMapper
         $model->id = $invitation->id();
         $model->realm_id = $invitation->realmId();
         $model->email = $invitation->email()->value();
+        $model->invited_by = $invitation->invitedBy();
         $model->token_hash = $invitation->tokenHash();
         $model->metadata = $invitation->metadata();
         $model->expires_at = $invitation->expiresAt();

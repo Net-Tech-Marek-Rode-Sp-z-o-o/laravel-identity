@@ -58,15 +58,16 @@ no body.
 | POST | `/{prefix}/2fa/confirm` | sanctum | `{code}` → `204` (activates 2FA; `422` on a bad code) |
 | POST | `/{prefix}/2fa/disable` | sanctum | `{code}` → `204` (`422` on a bad code) |
 | POST | `/{prefix}/2fa/recovery-codes` | sanctum | `{data:{recovery_codes}}` (regenerates, replacing the old set) |
-| POST | `/{prefix}/invitations` | sanctum | `{email,metadata?}` → `201 {data:{id,email,expires_at}}` (`422` if the email is already a user) |
-| DELETE | `/{prefix}/invitations/{invitationId}` | sanctum | `204` (revokes a pending invitation) |
+| POST | `/{prefix}/invitations` | sanctum | `{email}` → `201 {data:{id,email,expires_at}}` (`422` if the email is already a user) |
+| DELETE | `/{prefix}/invitations/{invitationId}` | sanctum | `204` (revokes a pending invitation; `404` if unknown or `InvitationAccess` refuses) |
 | POST | `/{prefix}/{provider}/link` | sanctum | `{accessToken}` → `204` (links a social account to the current user; `409` if already linked elsewhere) |
 
 Errors are mapped to JSON: invalid credentials → `401`, invalid/expired 2FA challenge token → `401`,
 duplicate email → `422`, invalid reset token → `422`, invalid verification token → `422`, invalid/expired/revoked invitation → `422`,
 failed password confirmation on account deletion → `422`,
 invalid 2FA code → `422`, 2FA not enrolled → `422`, unverified social email on an existing user →
-`422`, social account already linked → `409`, user not found → `404`.
+`422`, social account already linked → `409`, user not found → `404`, unknown or refused invitation on
+revoke → `404`, invitation without an inviter on accept → `422`.
 
 ## Middleware
 
@@ -97,6 +98,12 @@ Route::middleware(['auth:sanctum', 'identity.verified'])->group(...);
 - `InvitationAcceptanceHook` — runs after an invitation is accepted (default no-op). Bind your own to
   act on the host-interpreted `metadata` (e.g. assign the invited role/tenant) — it receives a typed
   `AcceptedInvitation { userId, email, realmId, metadata }`.
+- `InvitationMetadataFactory` — builds the invitation `metadata` on the server from the inviter's id
+  (default: empty). The client cannot send metadata. Bind your own to put, for example, the inviter's
+  tenant or household id into it; the acceptance hook can then trust it.
+- `InvitationAccess` — decides who may revoke an invitation, from the requester's id and an
+  `InvitationSnapshot { id, invitedBy, metadata }`. The default `InviterOnlyInvitationAccess` allows the
+  inviter only. A refused or unknown invitation answers `404`.
 - `PostRegistrationHook<TPayload>` + `RegistrationPayloadFactory` — run host logic inside the register
   transaction. The factory maps the register request into a host-typed `RegistrationPayload` (defaults
   to `NoRegistrationPayload`); the hook (default no-op) receives the new `RegisteredUser` + that typed
@@ -120,3 +127,21 @@ the SPA obtains the provider access token and posts it to `/{provider}/login|lin
 `UserRegistered`, `EmailVerified`, `UserDeleted`, `PasswordChanged`, `TwoFactorEnabled`/`TwoFactorDisabled` and
 `InvitationAccepted` are published via the domain event publisher — subscribe for decoupled
 follow-ups (welcome mail, provisioning, …).
+
+## Upgrading from 0.5 to 0.6
+
+0.6 stops a client from steering invitations it does not own.
+
+- The client no longer sends `metadata` with `POST /invitations`; the field is ignored. Bind an
+  `InvitationMetadataFactory` if your acceptance hook reads metadata, or the hook gets an empty array.
+- `InviteUser` takes a required `invitedBy` instead of `metadata`; the shipped controller passes the
+  current user's id. The invitation stores it (`identity_invitations.invited_by`, new migration).
+- `RevokeInvitation` takes a required `requestedBy`. Only the inviter may revoke by default; bind an
+  `InvitationAccess` to widen it. An unknown or refused invitation answers `404` (it was `422`).
+- `RevokeInvitation` throws `InvitationNotFoundException` instead of
+  `InvalidInvitationException::notFound()`. Update any host code that dispatches it and catches the old
+  exception.
+- Invitations created before the upgrade have `invited_by = null` and metadata the client may have
+  set. They can no longer be accepted (`422`), so a forged `metadata` cannot reach the acceptance hook.
+  Ask the inviter to send a new invitation.
+

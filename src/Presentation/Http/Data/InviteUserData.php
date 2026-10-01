@@ -9,10 +9,8 @@ use Spatie\LaravelData\Data;
 
 final class InviteUserData extends Data
 {
-    /** @param array<string, mixed> $metadata */
     public function __construct(
         #[Email]
         public string $email,
-        public array $metadata = [],
     ) {}
 }

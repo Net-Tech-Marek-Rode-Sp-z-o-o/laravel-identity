@@ -12,6 +12,7 @@ use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\UserId;
 use NetCode\Identity\Infrastructure\Security\Sha256TokenHasher;
 use NetCode\Identity\Tests\Support\FixedClock;
+use NetCode\Identity\Tests\Support\FixedInvitationMetadataFactory;
 use NetCode\Identity\Tests\Support\FixedRealmContext;
 use NetCode\Identity\Tests\Support\FixedTokenGenerator;
 use NetCode\Identity\Tests\Support\InMemoryInvitationRepository;
@@ -22,6 +23,8 @@ use PHPUnit\Framework\TestCase;
 
 final class InviteUserHandlerTest extends TestCase
 {
+    private const string INVITER_ID = '33333333-3333-4333-8333-333333333333';
+
     private function handler(
         InMemoryUserRepository $users,
         InMemoryInvitationRepository $invitations,
@@ -36,6 +39,7 @@ final class InviteUserHandlerTest extends TestCase
             notifier: $notifier,
             invitations: $invitations,
             ttlMinutes: 4320,
+            metadata: new FixedInvitationMetadataFactory(['household_id' => 'h-1']),
         );
     }
 
@@ -47,12 +51,14 @@ final class InviteUserHandlerTest extends TestCase
 
         $issued = ($this->handler(new InMemoryUserRepository, $invitations, $notifier))(new InviteUser(
             email: 'ada@example.test',
-            metadata: ['role' => 'admin'],
+            invitedBy: self::INVITER_ID,
         ));
 
         $this->assertSame('ada@example.test', $issued->email);
         $this->assertSame('the-token', $notifier->token);
-        $this->assertNotNull($invitations->findByHash(hash('sha256', 'the-token')));
+        $stored = $invitations->findByHash(hash('sha256', 'the-token'));
+        $this->assertSame(self::INVITER_ID, $stored?->invitedBy()?->value());
+        $this->assertSame(['household_id' => 'h-1'], $stored->metadata());
     }
 
     #[Test]
@@ -73,6 +79,7 @@ final class InviteUserHandlerTest extends TestCase
 
         ($this->handler($users, new InMemoryInvitationRepository, new SpyInvitationNotifier))(new InviteUser(
             email: 'ada@example.test',
+            invitedBy: self::INVITER_ID,
         ));
     }
 }

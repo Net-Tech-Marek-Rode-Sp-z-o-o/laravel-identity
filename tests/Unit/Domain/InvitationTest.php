@@ -10,6 +10,7 @@ use NetCode\Identity\Domain\Exceptions\InvalidInvitationException;
 use NetCode\Identity\Domain\Invitation;
 use NetCode\Identity\Domain\ValueObjects\Email;
 use NetCode\Identity\Domain\ValueObjects\InvitationId;
+use NetCode\Identity\Domain\ValueObjects\UserId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -18,12 +19,13 @@ final class InvitationTest extends TestCase
     private const string NOW = '2026-01-01T00:00:00+00:00';
 
     /** @param array<string, mixed> $metadata */
-    private function invitation(string $expiresAt = '2026-01-08T00:00:00+00:00', array $metadata = []): Invitation
+    private function invitation(string $expiresAt = '2026-01-08T00:00:00+00:00', array $metadata = [], bool $withInviter = true): Invitation
     {
         return Invitation::issue(
             id: InvitationId::random(),
             realmId: null,
             email: new Email('ada@example.test'),
+            invitedBy: $withInviter ? UserId::random() : null,
             tokenHash: hash('sha256', 'the-token'),
             metadata: $metadata,
             expiresAt: new DateTimeImmutable($expiresAt),
@@ -95,5 +97,15 @@ final class InvitationTest extends TestCase
         $this->expectException(InvalidInvitationException::class);
 
         $invitation->revoke(new DateTimeImmutable(self::NOW));
+    }
+
+    #[Test]
+    public function it_cannot_be_accepted_without_an_inviter(): void
+    {
+        $invitation = $this->invitation(withInviter: false);
+
+        $this->expectException(InvalidInvitationException::class);
+
+        $invitation->accept(new DateTimeImmutable(self::NOW));
     }
 }
