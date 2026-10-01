@@ -42,6 +42,7 @@ final class InvitationFlowTest extends TestCase
             'email' => $email,
             'password' => 'password123',
         ])->assertCreated();
+        DB::table('identity_users')->where('email', $email)->update(['email_verified_at' => now()]);
 
         $token = (string) $this->postJson('/auth/login', [
             'email' => $email,
