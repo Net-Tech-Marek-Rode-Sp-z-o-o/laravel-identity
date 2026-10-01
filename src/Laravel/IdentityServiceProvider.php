@@ -148,6 +148,7 @@ final class IdentityServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
         $this->app->make(Router::class)->aliasMiddleware(name: 'identity.verified', class: EnsureEmailIsVerified::class);
+        RateLimits::register();
 
         Route::prefix((string) config('identity.route_prefix'))
             ->middleware('api')

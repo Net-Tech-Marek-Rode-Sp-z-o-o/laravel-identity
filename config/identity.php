@@ -16,6 +16,28 @@ return [
 
     'invitation_ttl' => 4320,
 
+    'throttle' => [
+
+        'login_per_minute' => 5,
+
+        'login_per_minute_per_ip' => 20,
+
+        'two_factor_per_minute' => 5,
+
+        'register_per_minute' => 5,
+
+        'password_per_minute' => 5,
+
+        'password_requests_per_hour_per_email' => 3,
+
+        'password_requests_per_hour_per_ip' => 20,
+
+        'tokens_per_minute' => 10,
+
+        'mail_per_hour' => 10,
+
+    ],
+
     'two_factor' => [
 
         'issuer' => env('IDENTITY_2FA_ISSUER'),
