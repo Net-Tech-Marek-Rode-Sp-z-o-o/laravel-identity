@@ -55,6 +55,7 @@ final class AcceptInvitationHandlerTest extends TestCase
             id: InvitationId::random(),
             realmId: null,
             email: new Email('ada@example.test'),
+            invitedBy: UserId::random(),
             tokenHash: hash('sha256', 'the-token'),
             metadata: $metadata,
             expiresAt: new DateTimeImmutable($expiresAt),

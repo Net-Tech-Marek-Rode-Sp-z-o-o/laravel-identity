@@ -9,11 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 use NetCode\Domain\Laravel\IdentifierCast;
 use NetCode\Identity\Domain\ValueObjects\InvitationId;
 use NetCode\Identity\Domain\ValueObjects\RealmId;
+use NetCode\Identity\Domain\ValueObjects\UserId;
 
 /**
  * @property InvitationId $id
  * @property RealmId|null $realm_id
  * @property string $email
+ * @property UserId|null $invited_by
  * @property string $token_hash
  * @property array<string, mixed> $metadata
  * @property DateTimeImmutable $expires_at
@@ -34,6 +36,7 @@ final class InvitationModel extends Model
     protected $casts = [
         'id' => IdentifierCast::class.':'.InvitationId::class,
         'realm_id' => IdentifierCast::class.':'.RealmId::class,
+        'invited_by' => IdentifierCast::class.':'.UserId::class,
         'metadata' => 'array',
         'expires_at' => 'immutable_datetime',
         'accepted_at' => 'immutable_datetime',

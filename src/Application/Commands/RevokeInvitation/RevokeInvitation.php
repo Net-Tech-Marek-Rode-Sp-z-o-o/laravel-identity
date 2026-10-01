@@ -13,5 +13,6 @@ final readonly class RevokeInvitation implements Command
 {
     public function __construct(
         public string $invitationId,
+        public string $requestedBy,
     ) {}
 }

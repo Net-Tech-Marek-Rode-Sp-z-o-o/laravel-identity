@@ -116,9 +116,10 @@ concern, surfaced by composing its `Authorizer` into this response.
 
 An authenticated user invites an email; the invitee accepts with a token, which creates their account.
 
-- `POST /{prefix}/invitations` `{email, metadata?}` (authenticated) — `InviteUser` rejects an email
+- `POST /{prefix}/invitations` `{email}` (authenticated) — `InviteUser` rejects an email
   that already belongs to a user (**422**), then issues an `Invitation`: a high-entropy token stored
-  **SHA-256 hashed** with a TTL (`invitation_ttl`) plus a host-interpreted `metadata` map, and hands
+  **SHA-256 hashed** with a TTL (`invitation_ttl`), the inviter's id (`invited_by`) and a `metadata` map
+  that the server builds through `InvitationMetadataFactory` (the client cannot set it), and hands
   the plaintext token to `InvitationNotifier`. Returns `{data:{id, email, expires_at}}`.
 - `POST /{prefix}/invitations/accept` `{token, name, password}` (public) — `AcceptInvitation` looks
   the invitation up by token hash, `accept()`s it (an expired, already-accepted or revoked one → **422**),
@@ -126,8 +127,10 @@ An authenticated user invites an email; the invitee accepts with a token, which 
   accepted (emitting `InvitationAccepted`), and runs `InvitationAcceptanceHook` with a typed
   `AcceptedInvitation { userId, email, realmId, metadata }` — all in one transaction. Responds
   `201 {data:{id}}`.
-- `DELETE /{prefix}/invitations/{invitationId}` (authenticated) — `RevokeInvitation` revokes a pending
-  invitation so its token can no longer be accepted → **204**.
+- `DELETE /{prefix}/invitations/{invitationId}` (authenticated) — `RevokeInvitation` asks
+  `InvitationAccess` whether the current user may revoke it (default: the inviter only). An unknown or
+  refused invitation → **404**. Otherwise it revokes the pending invitation so its token can no longer
+  be accepted → **204**.
 
 Roles/permissions are **not** part of this — the intended role rides in `metadata`, and the host's
 acceptance hook (or the access package) turns it into an actual grant.

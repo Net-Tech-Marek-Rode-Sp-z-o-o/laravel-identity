@@ -30,6 +30,9 @@ Configure the Sanctum guard to use this package's model (in the host `config/aut
 | `password_reset_ttl` | `60` | reset-token lifetime in minutes |
 | `email_verification_ttl` | `1440` | e-mail verification token lifetime in minutes (default 24 hours) |
 | `invitation_ttl` | `4320` | invitation lifetime in minutes (default 3 days) |
+| `throttle.*_per_minute` | `5` / `20` / `10` | request limits per minute: `login`, `two_factor`, `register`, `password` (5), `login_per_minute_per_ip` (20), `tokens` (10) |
+| `throttle.password_requests_per_hour_per_*` | `3` / `20` | reset mails per hour per e-mail (3) and per IP (20) |
+| `throttle.mail_per_hour` | `10` | invitations and verification resends one user may send per hour |
 | `two_factor.issuer` | `null` | TOTP issuer label shown in authenticator apps (falls back to `app.name`) |
 | `two_factor.challenge_ttl` | `5` | 2FA challenge-token lifetime in minutes |
 
@@ -58,23 +61,50 @@ no body.
 | POST | `/{prefix}/2fa/confirm` | sanctum | `{code}` → `204` (activates 2FA; `422` on a bad code) |
 | POST | `/{prefix}/2fa/disable` | sanctum | `{code}` → `204` (`422` on a bad code) |
 | POST | `/{prefix}/2fa/recovery-codes` | sanctum | `{data:{recovery_codes}}` (regenerates, replacing the old set) |
-| POST | `/{prefix}/invitations` | sanctum | `{email,metadata?}` → `201 {data:{id,email,expires_at}}` (`422` if the email is already a user) |
-| DELETE | `/{prefix}/invitations/{invitationId}` | sanctum | `204` (revokes a pending invitation) |
+| POST | `/{prefix}/invitations` | sanctum, verified | `{email}` → `201 {data:{id,email,expires_at}}` (`422` if the email is already a user) |
+| DELETE | `/{prefix}/invitations/{invitationId}` | sanctum | `204` (revokes a pending invitation; `404` if unknown or `InvitationAccess` refuses) |
 | POST | `/{prefix}/{provider}/link` | sanctum | `{accessToken}` → `204` (links a social account to the current user; `409` if already linked elsewhere) |
 
 Errors are mapped to JSON: invalid credentials → `401`, invalid/expired 2FA challenge token → `401`,
 duplicate email → `422`, invalid reset token → `422`, invalid verification token → `422`, invalid/expired/revoked invitation → `422`,
 failed password confirmation on account deletion → `422`,
 invalid 2FA code → `422`, 2FA not enrolled → `422`, unverified social email on an existing user →
-`422`, social account already linked → `409`, user not found → `404`.
+`422`, social account already linked → `409`, user not found → `404`, unknown or refused invitation on
+revoke → `404`, invitation without an inviter on accept → `422`.
 
 ## Middleware
 
 `identity.verified` returns **403** for an authenticated user whose e-mail is not verified. The
-package does not apply it; add it to the host routes that need a verified user:
+package applies it only to `POST /{prefix}/invitations`; add it to the host routes that need a verified
+user:
 
 ```php
 Route::middleware(['auth:sanctum', 'identity.verified'])->group(...);
+```
+
+## Rate limits
+
+The package registers named rate limiters and applies them to its routes. A request over the limit
+answers `429`.
+
+| Limiter | Routes | Key | Default |
+| :---- | :---- | :---- | :---- |
+| `identity-login` | `login`, `{provider}/login` | e-mail + IP, and IP alone (social login has no e-mail, so IP) | 5 and 20 per minute |
+| `identity-two-factor` | `2fa/challenge` | IP, and the user of the challenge token | 5 per minute each |
+| `identity-register` | `register` | IP | 5 per minute |
+| `identity-password-request` | `password/forgot` | e-mail, and IP | 3 and 20 per hour |
+| `identity-password` | `password/reset` | IP | 5 per minute |
+| `identity-tokens` | `invitations/accept`, `email/verify` | IP | 10 per minute |
+| `identity-mail` | `invitations`, `email/resend` | user | 10 per hour |
+
+E-mail keys are trimmed and lower-cased. IP keys use `Request::ip()`, so behind a proxy or load
+balancer configure trusted proxies in the host, or every client shares one bucket.
+
+Change the numbers in `config/identity.php`. To change the key or the shape, define a limiter with
+the same name in a host service provider; host providers boot after the package, so theirs wins:
+
+```php
+RateLimiter::for('identity-login', fn (Request $request) => Limit::perMinute(3)->by($request->ip()));
 ```
 
 ## Ports (hexagonal)
@@ -97,6 +127,12 @@ Route::middleware(['auth:sanctum', 'identity.verified'])->group(...);
 - `InvitationAcceptanceHook` — runs after an invitation is accepted (default no-op). Bind your own to
   act on the host-interpreted `metadata` (e.g. assign the invited role/tenant) — it receives a typed
   `AcceptedInvitation { userId, email, realmId, metadata }`.
+- `InvitationMetadataFactory` — builds the invitation `metadata` on the server from the inviter's id
+  (default: empty). The client cannot send metadata. Bind your own to put, for example, the inviter's
+  tenant or household id into it; the acceptance hook can then trust it.
+- `InvitationAccess` — decides who may revoke an invitation, from the requester's id and an
+  `InvitationSnapshot { id, invitedBy, metadata }`. The default `InviterOnlyInvitationAccess` allows the
+  inviter only. A refused or unknown invitation answers `404`.
 - `PostRegistrationHook<TPayload>` + `RegistrationPayloadFactory` — run host logic inside the register
   transaction. The factory maps the register request into a host-typed `RegistrationPayload` (defaults
   to `NoRegistrationPayload`); the hook (default no-op) receives the new `RegisteredUser` + that typed
@@ -120,3 +156,23 @@ the SPA obtains the provider access token and posts it to `/{provider}/login|lin
 `UserRegistered`, `EmailVerified`, `UserDeleted`, `PasswordChanged`, `TwoFactorEnabled`/`TwoFactorDisabled` and
 `InvitationAccepted` are published via the domain event publisher — subscribe for decoupled
 follow-ups (welcome mail, provisioning, …).
+
+## Upgrading from 0.5 to 0.6
+
+0.6 stops a client from steering invitations it does not own.
+
+- The client no longer sends `metadata` with `POST /invitations`; the field is ignored. Bind an
+  `InvitationMetadataFactory` if your acceptance hook reads metadata, or the hook gets an empty array.
+- `InviteUser` takes a required `invitedBy` instead of `metadata`; the shipped controller passes the
+  current user's id. The invitation stores it (`identity_invitations.invited_by`, new migration).
+- `RevokeInvitation` takes a required `requestedBy`. Only the inviter may revoke by default; bind an
+  `InvitationAccess` to widen it. An unknown or refused invitation answers `404` (it was `422`).
+- `RevokeInvitation` throws `InvitationNotFoundException` instead of
+  `InvalidInvitationException::notFound()`. Update any host code that dispatches it and catches the old
+  exception.
+- `POST /invitations` now requires a verified e-mail (`403` otherwise) and, with `email/resend`, is
+  limited to `throttle.mail_per_hour`. The other public routes have rate limits too (see Rate limits).
+- Invitations created before the upgrade have `invited_by = null` and metadata the client may have
+  set. They can no longer be accepted (`422`), so a forged `metadata` cannot reach the acceptance hook.
+  Ask the inviter to send a new invitation.
+
